@@ -10,6 +10,7 @@ public class Program
     public static Task Main(string[] args) => new Program().MainAsync();
 
     private DiscordSocketClient Client;
+    IMessageChannel Channel;
 
     string UsersFilePath = "Data/Users.json";
 
@@ -109,9 +110,9 @@ public class Program
 
     private async Task HandleSetChannelCommand(SocketSlashCommand command)
     {
-        var Channel = command.Data.Options.First() as IMessageChannel;
+        Channel = command.Data.Options.First().Value as IMessageChannel;
 
-        await command.RespondAsync($"Leaderboard will be sent in {command.Data.Options.First().Value} from now on");
+        await command.RespondAsync($"Leaderboard will be sent in {command.Data.Options.First().Value} from now on", ephemeral: true);
     }
 
     private async Task HandleAddUserCommand(SocketSlashCommand command)
