@@ -49,32 +49,10 @@ public class Program
         AddUserCommand.WithDescription("Adds a user to be included in the leaderboard updates");
         AddUserCommand.AddOption("user", ApplicationCommandOptionType.String, "Speedrun.com user", isRequired: true);
 
-        // Next, lets create our slash command builder. This is like the embed builder but for slash commands.
-        var guildCommand = new SlashCommandBuilder();
-
-        // Note: Names have to be all lowercase and match the regular expression ^[\w-]{3,32}$
-        guildCommand.WithName("first-command");
-
-        // Descriptions can have a max length of 100.
-        guildCommand.WithDescription("This is my first guild slash command!");
-
-        // Let's do our global command
-        var globalCommand = new SlashCommandBuilder();
-        globalCommand.WithName("first-global-command");
-        globalCommand.WithDescription("This is my first global slash command");
-
         try
         {
             // Create each slash command
             await guild.CreateApplicationCommandAsync(AddUserCommand.Build());
-
-            // Now that we have our builder, we can call the CreateApplicationCommandAsync method to make our slash command.
-            await guild.CreateApplicationCommandAsync(guildCommand.Build());
-
-            // With global commands we don't need the guild.
-            await Client.CreateGlobalApplicationCommandAsync(globalCommand.Build());
-            // Using the ready event is a simple implementation for the sake of the example. Suitable for testing and development.
-            // For a production bot, it is recommended to only run the CreateGlobalApplicationCommandAsync() once for each command.
         }
         catch (ApplicationCommandException exception)
         {
@@ -92,12 +70,6 @@ public class Program
         {
             case "add-user":
                 await HandleAddUserCommand(command);
-                break;
-            case "first-command":
-                await command.RespondAsync($"You executed {command.Data.Name}");
-                break;
-            case "first-global-command":
-                await command.RespondAsync($"You executed {command.Data.Name}");
                 break;
         }
     }
