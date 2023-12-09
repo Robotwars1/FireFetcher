@@ -44,17 +44,17 @@ public class Program
         var guild = Client.GetGuild(628666811239497749);
 
         // Command for adding user to leaderboard
-        var AddUserCommand = new SlashCommandBuilder();
-        AddUserCommand.WithName("add-user");
-        AddUserCommand.WithDescription("Adds a user to be included in the leaderboard updates");
-        AddUserCommand.AddOption("user", ApplicationCommandOptionType.String, "Speedrun.com user", isRequired: true);
+        var AddUserCommand = new SlashCommandBuilder()
+            .WithName("add-user")
+            .WithDescription("Adds a user to be included in the leaderboard updates")
+            .AddOption("user", ApplicationCommandOptionType.String, "Speedrun.com user", isRequired: true);
 
         try
         {
             // Create each slash command
             await guild.CreateApplicationCommandAsync(AddUserCommand.Build());
         }
-        catch (ApplicationCommandException exception)
+        catch (HttpException exception)
         {
             // If our command was invalid, we should catch an ApplicationCommandException. This exception contains the path of the error as well as the error message. You can serialize the Error field in the exception to get a visual of where your error is.
             var json = JsonConvert.SerializeObject(exception.Errors, Formatting.Indented);
