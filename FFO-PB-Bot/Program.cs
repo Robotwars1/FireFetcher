@@ -32,10 +32,22 @@ public class Program
         await Task.Delay(-1);
     }
 
+    private Task Log(LogMessage msg)
+    {
+        Console.WriteLine(msg.ToString());
+        return Task.CompletedTask;
+    }
+
     public async Task Client_Ready()
     {
         // Let's build a guild command! We're going to need a guild so lets just put that in a variable.
         var guild = Client.GetGuild(628666811239497749);
+
+        // Command for adding user to leaderboard
+        var AddUserCommand = new SlashCommandBuilder();
+        AddUserCommand.WithName("add-user");
+        AddUserCommand.WithDescription("Adds a user to be included in the leaderboard updates");
+        AddUserCommand.AddOption("user", ApplicationCommandOptionType.String, "Speedrun.com user", isRequired: true);
 
         // Next, lets create our slash command builder. This is like the embed builder but for slash commands.
         var guildCommand = new SlashCommandBuilder();
@@ -53,6 +65,9 @@ public class Program
 
         try
         {
+            // Create each slash command
+            await guild.CreateApplicationCommandAsync(AddUserCommand.Build());
+
             // Now that we have our builder, we can call the CreateApplicationCommandAsync method to make our slash command.
             await guild.CreateApplicationCommandAsync(guildCommand.Build());
 
@@ -73,12 +88,22 @@ public class Program
 
     private async Task SlashCommandHandler(SocketSlashCommand command)
     {
-        await command.RespondAsync($"You executed {command.Data.Name}");
+        switch (command.Data.Name)
+        {
+            case "add-user":
+                await HandleAddUserCommand(command);
+                break;
+            case "first-command":
+                await command.RespondAsync($"You executed {command.Data.Name}");
+                break;
+            case "first-global-command":
+                await command.RespondAsync($"You executed {command.Data.Name}");
+                break;
+        }
     }
 
-    private Task Log(LogMessage msg)
+    private async Task HandleAddUserCommand(SocketSlashCommand command)
     {
-        Console.WriteLine(msg.ToString());
-        return Task.CompletedTask;
+        await command.RespondAsync($"Adding user to leaderboard", ephemeral: true);
     }
 }
