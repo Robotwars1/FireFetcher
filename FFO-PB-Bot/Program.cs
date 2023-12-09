@@ -57,6 +57,12 @@ public class Program
         // Let's build a guild command! We're going to need a guild so lets just put that in a variable.
         var guild = Client.GetGuild(628666811239497749);
 
+        // Command for setting which server channel to send leaderboard in
+        var SetChannelCommand = new SlashCommandBuilder()
+            .WithName("set-channel")
+            .WithDescription("Sets which channel to send leaderboard in")
+            .AddOption("channel", ApplicationCommandOptionType.Channel, "Channel", isRequired: true);
+
         // Command for adding user to leaderboard
         var AddUserCommand = new SlashCommandBuilder()
             .WithName("add-user")
@@ -71,6 +77,7 @@ public class Program
         try
         {
             // Create each slash command
+            await guild.CreateApplicationCommandAsync(SetChannelCommand.Build());
             await guild.CreateApplicationCommandAsync(AddUserCommand.Build());
             await guild.CreateApplicationCommandAsync(UpdateLeaderboardCommand.Build());
         }
@@ -88,6 +95,9 @@ public class Program
     {
         switch (command.Data.Name)
         {
+            case "set-channel":
+                await HandleSetChannelCommand(command);
+                break;
             case "add-user":
                 await HandleAddUserCommand(command);
                 break;
@@ -95,6 +105,13 @@ public class Program
                 await HandleUpdateLeaderboardCommand(command);
                 break;
         }
+    }
+
+    private async Task HandleSetChannelCommand(SocketSlashCommand command)
+    {
+        var Channel = command.Data.Options.First() as IMessageChannel;
+
+        await command.RespondAsync($"Leaderboard will be sent in {command.Data.Options.First().Value} from now on");
     }
 
     private async Task HandleAddUserCommand(SocketSlashCommand command)
