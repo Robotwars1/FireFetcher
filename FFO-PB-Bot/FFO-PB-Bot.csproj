@@ -8,4 +8,18 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="Token.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Token.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Discord.Net" Version="3.13.0" />
+  </ItemGroup>
+
 </Project>
