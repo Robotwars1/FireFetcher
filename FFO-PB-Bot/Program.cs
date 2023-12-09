@@ -2,12 +2,26 @@
 using Discord.Net;
 using Discord.WebSocket;
 using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 public class Program
 {
     public static Task Main(string[] args) => new Program().MainAsync();
 
     private DiscordSocketClient Client;
+
+    string UsersFilePath = "Data/Users.json";
+
+    private readonly JsonSerializerOptions _readOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
+    private static readonly JsonSerializerOptions _writeOptions = new()
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
 
     public async Task MainAsync()
     {
@@ -47,7 +61,7 @@ public class Program
         var AddUserCommand = new SlashCommandBuilder()
             .WithName("add-user")
             .WithDescription("Adds a user to be included in the leaderboard updates")
-            .AddOption("user", ApplicationCommandOptionType.String, "Speedrun.com user", isRequired: true);
+            .AddOption("username", ApplicationCommandOptionType.String, "Speedrun.com username", isRequired: true);
 
         try
         {
@@ -76,6 +90,20 @@ public class Program
 
     private async Task HandleAddUserCommand(SocketSlashCommand command)
     {
-        await command.RespondAsync($"Adding user to leaderboard", ephemeral: true);
+        // Read current Users list
+        FileStream JsonFile = File.OpenRead(UsersFilePath);
+        List<string> Users = System.Text.Json.JsonSerializer.Deserialize<List<string>>(JsonFile, _readOptions);
+        JsonFile.Close();
+
+        // Add inputet user to Users list
+        Users.Add(command.Data.Options.First().Value.ToString());
+
+        // Write to Users file
+        JsonFile = File.OpenWrite(UsersFilePath);
+        var Utf8JsonWriter = new Utf8JsonWriter(JsonFile);
+        System.Text.Json.JsonSerializer.Serialize(Utf8JsonWriter, Users, _writeOptions);
+        JsonFile.Close();
+
+        await command.RespondAsync($"Added user {command.Data.Options.First().Value} to leaderboard", ephemeral: true);
     }
 }

@@ -9,10 +9,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Data\Users.json" />
     <None Remove="Token.txt" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Data\Users.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="Token.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
