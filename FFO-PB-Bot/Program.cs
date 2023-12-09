@@ -63,10 +63,16 @@ public class Program
             .WithDescription("Adds a user to be included in the leaderboard updates")
             .AddOption("username", ApplicationCommandOptionType.String, "Speedrun.com username", isRequired: true);
 
+        // Command for updating leaderboard
+        var UpdateLeaderboardCommand = new SlashCommandBuilder()
+            .WithName("update-leaderboard")
+            .WithDescription("Forces an update of the leaderboard");
+
         try
         {
             // Create each slash command
             await guild.CreateApplicationCommandAsync(AddUserCommand.Build());
+            await guild.CreateApplicationCommandAsync(UpdateLeaderboardCommand.Build());
         }
         catch (HttpException exception)
         {
@@ -84,6 +90,9 @@ public class Program
         {
             case "add-user":
                 await HandleAddUserCommand(command);
+                break;
+            case "update-leaderboard":
+                await HandleUpdateLeaderboardCommand(command);
                 break;
         }
     }
@@ -105,5 +114,10 @@ public class Program
         JsonFile.Close();
 
         await command.RespondAsync($"Added user {command.Data.Options.First().Value} to leaderboard", ephemeral: true);
+    }
+
+    private async Task HandleUpdateLeaderboardCommand(SocketSlashCommand command)
+    {
+        await command.RespondAsync("Leaderboard has been updated", ephemeral: true);
     }
 }
