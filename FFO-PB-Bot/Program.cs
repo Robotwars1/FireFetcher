@@ -12,6 +12,7 @@ public class Program
 
     private DiscordSocketClient Client;
     IMessageChannel Channel;
+    IUserMessage LeaderboardMessage;
 
     string UsersFilePath = "Data/Users.json";
 
@@ -428,7 +429,18 @@ public class Program
         embed.AddField("Amc",
             sb.ToString());
 
-        // Send leaderboard
-        await Channel.SendMessageAsync(embed: embed.Build());
+        // If leaderboard doesnt exist, send it
+        if (LeaderboardMessage == null)
+        {
+            LeaderboardMessage = await Channel.SendMessageAsync(embed: embed.Build());
+        }
+        // Else, edit it
+        else
+        {
+            await LeaderboardMessage.ModifyAsync(x =>
+            {
+                x.Embed = embed.Build();
+            });
+        }
     }
 }
