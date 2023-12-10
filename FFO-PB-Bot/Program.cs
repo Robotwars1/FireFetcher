@@ -286,16 +286,118 @@ public class Program
                 // If game is Portal 2 and category is Singleplayer and it is NoSLA
                 if (JsonData[i].data[j].run.game == "om1mw4d2" && JsonData[i].data[j].run.category == "jzd33ndn" && JsonData[i].data[j].run.values.sla == "z196dyy1")
                 {
-                    // Translate time
-                    string Time = JsonData[i].data[j].run.times.primary.Replace("PT", "").Replace("H", ":").Replace("M", ":").Replace("S", "");
+                    string DirtyTime = JsonData[i].data[j].run.times.primary;
 
-                    NoSLA.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users[i], Time = Time });
+                    StringBuilder StringBuild = new();
+
+                    string Hour = "";
+                    string Minute = "";
+                    string Second = "";
+                    string MiliSecond = "";
+
+                    int CharIndex = 0;
+
+                    foreach (char Char in DirtyTime)
+                    {
+                        StringBuild.Append(Char);
+
+                        if (StringBuild.ToString().EndsWith("H"))
+                        {
+                            Hour = StringBuild.ToString();
+                            StringBuild = new();
+                        }
+                        else if (StringBuild.ToString().EndsWith("M"))
+                        {
+                            Minute = StringBuild.ToString();
+                            StringBuild = new();
+                        }
+                        else if (StringBuild.ToString().EndsWith(".") || CharIndex == DirtyTime.Length)
+                        {
+                            Second = StringBuild.ToString();
+                            StringBuild = new();
+                        }
+                        else if (StringBuild.ToString().EndsWith("S"))
+                        {
+                            MiliSecond = StringBuild.ToString();
+                            StringBuild = new();
+                        }
+
+                        CharIndex++;
+                    }
+
+                    // Check if Minute and Second are missing a 0 in front (basicly if they are less than 10
+                    if (Minute.Length == 2)
+                    {
+                        Minute = Minute.Insert(0, "0");
+                    }
+                    if (Second.Length == 2)
+                    {
+                        Second = Second.Insert(0, "0");
+                    }
+
+                    DirtyTime = "" + Hour + Minute + Second + MiliSecond;
+
+                    // Translate time
+                    string CleanTime = DirtyTime.Replace("PT", "").Replace("H", ":").Replace("M", ":").Replace("S", "");
+
+                    NoSLA.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users[i], Time = CleanTime });
                 }
                 // If game is Portal 2 and category coop and it is Amc
                 else if (JsonData[i].data[j].run.game == "om1mw4d2" && JsonData[i].data[j].run.category == "l9kv40kg" && JsonData[i].data[j].run.values.amc == "mln3x8nq")
                 {
+                    string DirtyTime = JsonData[i].data[j].run.times.primary;
+
+                    StringBuilder StringBuild = new();
+
+                    string Hour = "";
+                    string Minute = "";
+                    string Second = "";
+                    string MiliSecond = "";
+
+                    int CharIndex = 0;
+
+                    foreach (char Char in DirtyTime)
+                    {
+                        StringBuild.Append(Char);
+
+                        if (StringBuild.ToString().EndsWith("H"))
+                        {
+                            Hour = StringBuild.ToString();
+                            StringBuild = new();
+                        }
+                        else if (StringBuild.ToString().EndsWith("M"))
+                        {
+                            Minute = StringBuild.ToString();
+                            StringBuild = new();
+                        }
+                        else if (StringBuild.ToString().EndsWith(".") || CharIndex == DirtyTime.Length)
+                        {
+                            Second = StringBuild.ToString();
+                            StringBuild = new();
+                        }
+                        else if (StringBuild.ToString().EndsWith("S"))
+                        {
+                            MiliSecond = StringBuild.ToString();
+                            StringBuild = new();
+                        }
+
+                        CharIndex++;
+                    }
+
+                    // Check if Minute and Second are missing a 0 in front (basicly if they are less than 10
+                    if (Minute.Length == 2)
+                    {
+                        Minute = Minute.Insert(0, "0");
+                    }
+                    if (Second.Length == 2)
+                    {
+                        Second = Second.Insert(0, "0");
+                    }
+
+                    DirtyTime = "" + Hour + Minute + Second + MiliSecond;
+
                     // Translate time
-                    string Time = JsonData[i].data[j].run.times.primary.Replace("PT", "").Replace("H", ":").Replace("M", ":").Replace("S", "");
+                    string CleanTime = DirtyTime.Replace("PT", "").Replace("H", ":").Replace("M", ":").Replace("S", "");
 
                     // Get second player
                     var client = new HttpClient();
@@ -323,7 +425,7 @@ public class Program
                         }
                     }
 
-                    Amc.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users[i], Partner = SecondPlayer, Time = Time });
+                    Amc.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users[i], Partner = SecondPlayer, Time = CleanTime });
                 }
             }
         }
