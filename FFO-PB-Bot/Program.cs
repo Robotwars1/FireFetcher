@@ -391,6 +391,11 @@ public class Program
             }
         }
 
+        if (NoSLA.Count == 0)
+        {
+            sb.Append("No runs available");
+        }
+
         embed.AddField("NoSLA",
             sb.ToString());
 
@@ -413,6 +418,11 @@ public class Program
                     sb.Append($"\n{i + 1}th - {Amc[i].Runner} & {Amc[i].Partner} - {Amc[i].Time}");
                     break;
             }
+        }
+
+        if (Amc.Count == 0)
+        {
+            sb.Append("No runs available");
         }
 
         embed.AddField("Amc",
