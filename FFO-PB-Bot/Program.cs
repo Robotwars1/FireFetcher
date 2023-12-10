@@ -109,6 +109,12 @@ public class Program
             .WithDescription("Adds a user to be included in the leaderboard updates")
             .AddOption("username", ApplicationCommandOptionType.String, "Speedrun.com username", isRequired: true);
 
+        // Command for removing user from leaderboard
+        var RemoveUserCommand = new SlashCommandBuilder()
+            .WithName("remove-user")
+            .WithDescription("Removes a user from the leaderboard")
+            .AddOption("username", ApplicationCommandOptionType.String, "Speedrun.com username", isRequired: true);
+
         // Command for updating leaderboard
         var UpdateLeaderboardCommand = new SlashCommandBuilder()
             .WithName("update-leaderboard")
@@ -119,6 +125,7 @@ public class Program
             // Create each slash command
             await guild.CreateApplicationCommandAsync(SetChannelCommand.Build());
             await guild.CreateApplicationCommandAsync(AddUserCommand.Build());
+            await guild.CreateApplicationCommandAsync(RemoveUserCommand.Build());
             await guild.CreateApplicationCommandAsync(UpdateLeaderboardCommand.Build());
         }
         catch (HttpException exception)
@@ -140,6 +147,9 @@ public class Program
                 break;
             case "add-user":
                 await HandleAddUserCommand(command);
+                break;
+            case "remove-user":
+                await HandleRemoveUserCommand(command);
                 break;
             case "update-leaderboard":
                 await HandleUpdateLeaderboardCommand(command);
@@ -171,6 +181,25 @@ public class Program
         JsonFile.Close();
 
         await command.RespondAsync($"Added user {command.Data.Options.First().Value} to leaderboard", ephemeral: true);
+    }
+
+    private async Task HandleRemoveUserCommand(SocketSlashCommand command)
+    {
+        // Read current Users list
+        FileStream JsonFile = File.OpenRead(UsersFilePath);
+        List<string> Users = System.Text.Json.JsonSerializer.Deserialize<List<string>>(JsonFile, _readOptions);
+        JsonFile.Close();
+
+        // Remove inputet user from Users list
+        Users.Remove(command.Data.Options.First().Value.ToString());
+
+        // Write to Users file
+        JsonFile = File.OpenWrite(UsersFilePath);
+        var Utf8JsonWriter = new Utf8JsonWriter(JsonFile);
+        System.Text.Json.JsonSerializer.Serialize(Utf8JsonWriter, Users, _writeOptions);
+        JsonFile.Close();
+
+        await command.RespondAsync($"Removed user {command.Data.Options.First().Value} from leaderboard", ephemeral: true);
     }
 
     private async Task HandleUpdateLeaderboardCommand(SocketSlashCommand command)
