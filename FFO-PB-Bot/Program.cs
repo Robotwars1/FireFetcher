@@ -40,8 +40,14 @@ public class Program
     {
         public string game { get; set; }
         public string category { get; set; }
+        public List<Player> players { get; set; }
         public Times times { get; set; }
         public Values values { get; set; }
+    }
+
+    public class Player
+    {
+        public Uri uri { get; set; }
     }
 
     public class Times
@@ -55,10 +61,26 @@ public class Program
         public string sla { get; set; }
     }
 
+    public class SrcProfileResponse
+    {
+        public ProfileData data { get; set; }
+    }
+
+    public class ProfileData
+    {
+        public Names names { get; set; }
+    }
+
+    public class Names
+    {
+        public string international { get; set; }
+    }
+
     // Classes for cleaned data
     public class CleanedResponse
     {
         public string Runner { get; set; }
+        public string Partner { get; set; }
         public int Place { get; set; }
         public string Time { get; set; }
     }
@@ -269,13 +291,77 @@ public class Program
                 // If game is Portal 2 and category is Amc
                 else if (JsonData[i].data[j].run.game == "om1mw4d2" && JsonData[i].data[j].run.category == "l9kv40kg")
                 {
-                    Amc.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users[i] });
+                    // Translate time
+                    string Time = JsonData[i].data[j].run.times.primary.Replace("PT", "").Replace("H", ":").Replace("M", ":").Replace("S", "");
+
+                    // Get second player
+                    var client = new HttpClient();
+                    string SecondPlayer = "";
+
+                    foreach (Player player in JsonData[i].data[j].run.players)
+                    {
+                        var response = await client.GetAsync(player.uri);
+
+                        // If the response is successful, we'll 
+                        // interpret the response as XML 
+                        if (response.IsSuccessStatusCode)
+                        {
+                            var json = await response.Content.ReadAsStringAsync();
+
+                            // We can then use the LINQ to XML API to query the XML 
+                            SrcProfileResponse ProfileData = System.Text.Json.JsonSerializer.Deserialize<SrcProfileResponse>(json, _readOptions);
+                            
+                            // Check that we grabbed the other player
+                            if (ProfileData.data.names.international != Users[i])
+                            {
+                                SecondPlayer = ProfileData.data.names.international;
+                                break;
+                            }
+                        }
+                    }
+
+                    Amc.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users[i], Partner = SecondPlayer, Time = Time });
                 }
             }
         }
 
         // Sort pbs to find out who is first in each cat
         NoSLA = NoSLA.OrderBy(o => o.Place).ToList();
+        Amc = Amc.OrderBy(o => o.Place).ToList();
+
+        List<int> IndexToRemove = new();
+
+        for (int i = 0; i < Amc.Count; i++)
+        {
+            for (int j = 0; j < Amc.Count; j++)
+            {
+                // Dont compare a run with itself && dont compare with runs that should already be removed
+                if (i != j && !IndexToRemove.Contains(j) && !IndexToRemove.Contains(i))
+                {
+                    // Check there are no exact duplicates in Amc (with both ways to flip users)
+                    if ((Amc[i].Runner == Amc[j].Partner && Amc[i].Partner == Amc[j].Runner) || (Amc[i].Runner == Amc[j].Runner && Amc[i].Partner == Amc[j].Partner))
+                    {
+                        IndexToRemove.Add(j);
+                    }
+                    // Check one Runner doesnt have 2 runs in Amc
+                    if (Amc[i].Runner == Amc[j].Runner)
+                    {
+                        // This keeps the first instance of said runner, eg their fastest time
+                        IndexToRemove.Add(j);
+                    }
+                }
+            }
+        }
+
+        // Remove duplicate entries
+        IndexToRemove = IndexToRemove.Distinct().ToList();
+
+        // Removing backwards to avoid errors
+        IndexToRemove = IndexToRemove.OrderByDescending(o => o).ToList();
+        foreach (int Index in IndexToRemove)
+        {
+            Amc.RemoveAt(Index);
+        }
 
         // Build the enbeded message
         var embed = new EmbedBuilder
@@ -308,8 +394,29 @@ public class Program
         embed.AddField("NoSLA",
             sb.ToString());
 
-        //embed.AddField("Amc",
-        //    $"1st ");
+        // Build Amc Text
+        sb = new("");
+        for (int i = 0; i < Amc.Count; i++)
+        {
+            switch (i)
+            {
+                case 0:
+                    sb.Append($"1st - {Amc[i].Runner} & {Amc[i].Partner} - {Amc[i].Time}");
+                    break;
+                case 1:
+                    sb.Append($"\n2nd - {Amc[i].Runner} & {Amc[i].Partner} - {Amc[i].Time}");
+                    break;
+                case 2:
+                    sb.Append($"\n3rd - {Amc[i].Runner} & {Amc[i].Partner} - {Amc[i].Time}");
+                    break;
+                case > 2:
+                    sb.Append($"\n{i + 1}th - {Amc[i].Runner} & {Amc[i].Partner} - {Amc[i].Time}");
+                    break;
+            }
+        }
+
+        embed.AddField("Amc",
+            sb.ToString());
 
         // Send leaderboard
         await Channel.SendMessageAsync(embed: embed.Build());
