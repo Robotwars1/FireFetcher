@@ -60,6 +60,8 @@ public class Program
     {
         [JsonPropertyName("9l7x7xzn")]
         public string sla { get; set; }
+        [JsonPropertyName("38dj54e8")]
+        public string amc { get; set; }
     }
 
     public class SrcProfileResponse
@@ -289,8 +291,8 @@ public class Program
 
                     NoSLA.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users[i], Time = Time });
                 }
-                // If game is Portal 2 and category is Amc
-                else if (JsonData[i].data[j].run.game == "om1mw4d2" && JsonData[i].data[j].run.category == "l9kv40kg")
+                // If game is Portal 2 and category coop and it is Amc
+                else if (JsonData[i].data[j].run.game == "om1mw4d2" && JsonData[i].data[j].run.category == "l9kv40kg" && JsonData[i].data[j].run.values.amc == "mln3x8nq")
                 {
                     // Translate time
                     string Time = JsonData[i].data[j].run.times.primary.Replace("PT", "").Replace("H", ":").Replace("M", ":").Replace("S", "");
