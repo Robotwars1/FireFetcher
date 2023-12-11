@@ -208,6 +208,8 @@ public class Program
         JsonFile.Close();
 
         await command.RespondAsync($"Added user {command.Data.Options.First().Value} to leaderboard", ephemeral: true);
+
+        await GetPersonalBests();
     }
 
     private async Task HandleRemoveUserCommand(SocketSlashCommand command)
@@ -222,6 +224,8 @@ public class Program
         JsonFile.Close();
 
         await command.RespondAsync($"Removed user {command.Data.Options.First().Value} from leaderboard", ephemeral: true);
+
+        await GetPersonalBests();
     }
 
     private async Task HandleUpdateLeaderboardCommand(SocketSlashCommand command)
