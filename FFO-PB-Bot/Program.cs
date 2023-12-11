@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Net;
 using Discord.WebSocket;
+using FFO_PB_Bot;
 using Newtonsoft.Json;
 using System.Text;
 using System.Text.Json;
@@ -273,8 +274,6 @@ public class Program
                 JsonData.Add(TempDataHolder);
             }
 
-
-
             // Get board.portal2.sr pbs
         }
 
@@ -284,6 +283,8 @@ public class Program
         List<CleanedResponse> Srm = new();
         List<CleanedResponse> Mel = new();
 
+        TimeCleaner TimeClean = new();
+
         for (int i = 0; i < JsonData.Count; i++)
         {
             for (int j = 0; j < JsonData[i].data.Count; j++)
@@ -291,118 +292,16 @@ public class Program
                 // If game is Portal 2 and category is Singleplayer and it is NoSLA
                 if (JsonData[i].data[j].run.game == "om1mw4d2" && JsonData[i].data[j].run.category == "jzd33ndn" && JsonData[i].data[j].run.values.sla == "z196dyy1")
                 {
-                    string DirtyTime = JsonData[i].data[j].run.times.primary;
-
-                    StringBuilder StringBuild = new();
-
-                    string Hour = "";
-                    string Minute = "";
-                    string Second = "";
-                    string MiliSecond = "";
-
-                    int CharIndex = 0;
-
-                    foreach (char Char in DirtyTime)
-                    {
-                        StringBuild.Append(Char);
-
-                        if (StringBuild.ToString().EndsWith("H"))
-                        {
-                            Hour = StringBuild.ToString();
-                            StringBuild = new();
-                        }
-                        else if (StringBuild.ToString().EndsWith("M"))
-                        {
-                            Minute = StringBuild.ToString();
-                            StringBuild = new();
-                        }
-                        else if (StringBuild.ToString().EndsWith(".") || CharIndex == DirtyTime.Length)
-                        {
-                            Second = StringBuild.ToString();
-                            StringBuild = new();
-                        }
-                        else if (StringBuild.ToString().EndsWith("S"))
-                        {
-                            MiliSecond = StringBuild.ToString();
-                            StringBuild = new();
-                        }
-
-                        CharIndex++;
-                    }
-
-                    // Check if Minute and Second are missing a 0 in front (basicly if they are less than 10
-                    if (Minute.Length == 2)
-                    {
-                        Minute = Minute.Insert(0, "0");
-                    }
-                    if (Second.Length == 2)
-                    {
-                        Second = Second.Insert(0, "0");
-                    }
-
-                    DirtyTime = "" + Hour + Minute + Second + MiliSecond;
-
-                    // Translate time
-                    string CleanTime = DirtyTime.Replace("PT", "").Replace("H", ":").Replace("M", ":").Replace("S", "");
+                    // Call function to clean the time
+                    string CleanTime = TimeClean.Clean(JsonData[i].data[j].run.times.primary);
 
                     NoSLA.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users[i], Time = CleanTime });
                 }
                 // If game is Portal 2 and category coop and it is Amc
                 else if (JsonData[i].data[j].run.game == "om1mw4d2" && JsonData[i].data[j].run.category == "l9kv40kg" && JsonData[i].data[j].run.values.amc == "mln3x8nq")
                 {
-                    string DirtyTime = JsonData[i].data[j].run.times.primary;
-
-                    StringBuilder StringBuild = new();
-
-                    string Hour = "";
-                    string Minute = "";
-                    string Second = "";
-                    string MiliSecond = "";
-
-                    int CharIndex = 0;
-
-                    foreach (char Char in DirtyTime)
-                    {
-                        StringBuild.Append(Char);
-
-                        if (StringBuild.ToString().EndsWith("H"))
-                        {
-                            Hour = StringBuild.ToString();
-                            StringBuild = new();
-                        }
-                        else if (StringBuild.ToString().EndsWith("M"))
-                        {
-                            Minute = StringBuild.ToString();
-                            StringBuild = new();
-                        }
-                        else if (StringBuild.ToString().EndsWith(".") || CharIndex == DirtyTime.Length)
-                        {
-                            Second = StringBuild.ToString();
-                            StringBuild = new();
-                        }
-                        else if (StringBuild.ToString().EndsWith("S"))
-                        {
-                            MiliSecond = StringBuild.ToString();
-                            StringBuild = new();
-                        }
-
-                        CharIndex++;
-                    }
-
-                    // Check if Minute and Second are missing a 0 in front (basicly if they are less than 10
-                    if (Minute.Length == 2)
-                    {
-                        Minute = Minute.Insert(0, "0");
-                    }
-                    if (Second.Length == 2)
-                    {
-                        Second = Second.Insert(0, "0");
-                    }
-
-                    DirtyTime = "" + Hour + Minute + Second + MiliSecond;
-
-                    // Translate time
-                    string CleanTime = DirtyTime.Replace("PT", "").Replace("H", ":").Replace("M", ":").Replace("S", "");
+                    // Call function to clean the time
+                    string CleanTime = TimeClean.Clean(JsonData[i].data[j].run.times.primary);
 
                     // Get second player
                     var client = new HttpClient();
@@ -412,13 +311,11 @@ public class Program
                     {
                         var response = await client.GetAsync(player.uri);
 
-                        // If the response is successful, we'll 
-                        // interpret the response as XML 
+                        // If the response is successful
                         if (response.IsSuccessStatusCode)
                         {
                             var json = await response.Content.ReadAsStringAsync();
 
-                            // We can then use the LINQ to XML API to query the XML 
                             SrcProfileResponse ProfileData = System.Text.Json.JsonSerializer.Deserialize<SrcProfileResponse>(json, _readOptions);
                             
                             // Check that we grabbed the other player
@@ -435,118 +332,16 @@ public class Program
                 // If game is Portal 2 Speedrun Mod and category is Single Player
                 else if (JsonData[i].data[j].run.game == "lde3eme6" && JsonData[i].data[j].run.category == "ndx940vd")
                 {
-                    string DirtyTime = JsonData[i].data[j].run.times.primary;
-
-                    StringBuilder StringBuild = new();
-
-                    string Hour = "";
-                    string Minute = "";
-                    string Second = "";
-                    string MiliSecond = "";
-
-                    int CharIndex = 0;
-
-                    foreach (char Char in DirtyTime)
-                    {
-                        StringBuild.Append(Char);
-
-                        if (StringBuild.ToString().EndsWith("H"))
-                        {
-                            Hour = StringBuild.ToString();
-                            StringBuild = new();
-                        }
-                        else if (StringBuild.ToString().EndsWith("M"))
-                        {
-                            Minute = StringBuild.ToString();
-                            StringBuild = new();
-                        }
-                        else if (StringBuild.ToString().EndsWith(".") || CharIndex == DirtyTime.Length)
-                        {
-                            Second = StringBuild.ToString();
-                            StringBuild = new();
-                        }
-                        else if (StringBuild.ToString().EndsWith("S"))
-                        {
-                            MiliSecond = StringBuild.ToString();
-                            StringBuild = new();
-                        }
-
-                        CharIndex++;
-                    }
-
-                    // Check if Minute and Second are missing a 0 in front (basicly if they are less than 10
-                    if (Minute.Length == 2)
-                    {
-                        Minute = Minute.Insert(0, "0");
-                    }
-                    if (Second.Length == 2)
-                    {
-                        Second = Second.Insert(0, "0");
-                    }
-
-                    DirtyTime = "" + Hour + Minute + Second + MiliSecond;
-
-                    // Translate time
-                    string CleanTime = DirtyTime.Replace("PT", "").Replace("H", ":").Replace("M", ":").Replace("S", "");
+                    // Call function to clean the time
+                    string CleanTime = TimeClean.Clean(JsonData[i].data[j].run.times.primary);
 
                     Srm.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users[i], Time = CleanTime });
                 }
                 // If game is Portal Stories Mel and category is Story Mode and is Inbounds
                 else if (JsonData[i].data[j].run.game == "j1nz9l1p" && JsonData[i].data[j].run.category == "q25oowgk" && JsonData[i].data[j].run.values.MelInbounds == "4lx8vp31")
                 {
-                    string DirtyTime = JsonData[i].data[j].run.times.primary;
-
-                    StringBuilder StringBuild = new();
-
-                    string Hour = "";
-                    string Minute = "";
-                    string Second = "";
-                    string MiliSecond = "";
-
-                    int CharIndex = 0;
-
-                    foreach (char Char in DirtyTime)
-                    {
-                        StringBuild.Append(Char);
-
-                        if (StringBuild.ToString().EndsWith("H"))
-                        {
-                            Hour = StringBuild.ToString();
-                            StringBuild = new();
-                        }
-                        else if (StringBuild.ToString().EndsWith("M"))
-                        {
-                            Minute = StringBuild.ToString();
-                            StringBuild = new();
-                        }
-                        else if (StringBuild.ToString().EndsWith(".") || CharIndex == DirtyTime.Length)
-                        {
-                            Second = StringBuild.ToString();
-                            StringBuild = new();
-                        }
-                        else if (StringBuild.ToString().EndsWith("S"))
-                        {
-                            MiliSecond = StringBuild.ToString();
-                            StringBuild = new();
-                        }
-
-                        CharIndex++;
-                    }
-
-                    // Check if Minute and Second are missing a 0 in front (basicly if they are less than 10
-                    if (Minute.Length == 2)
-                    {
-                        Minute = Minute.Insert(0, "0");
-                    }
-                    if (Second.Length == 2)
-                    {
-                        Second = Second.Insert(0, "0");
-                    }
-
-                    DirtyTime = "" + Hour + Minute + Second + MiliSecond;
-
-                    // Translate time
-                    string CleanTime = DirtyTime.Replace("PT", "").Replace("H", ":").Replace("M", ":").Replace("S", "");
+                    // Call function to clean the time
+                    string CleanTime = TimeClean.Clean(JsonData[i].data[j].run.times.primary);
 
                     Mel.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users[i], Time = CleanTime });
                 }
@@ -559,83 +354,14 @@ public class Program
         Srm = Srm.OrderBy(o => o.Place).ToList();
         Mel = Mel.OrderBy(o => o.Place).ToList();
 
-        // Remove duplicate amc stuff
-        List<int> IndexToRemove = new();
-        for (int i = 0; i < Amc.Count; i++)
-        {
-            for (int j = 0; j < Amc.Count; j++)
-            {
-                // Dont compare a run with itself && dont compare with runs that should already be removed
-                if (i != j && !IndexToRemove.Contains(j) && !IndexToRemove.Contains(i))
-                {
-                    // Check there are no exact duplicates in Amc (with both ways to flip users)
-                    if ((Amc[i].Runner == Amc[j].Partner && Amc[i].Partner == Amc[j].Runner) || (Amc[i].Runner == Amc[j].Runner && Amc[i].Partner == Amc[j].Partner))
-                    {
-                        IndexToRemove.Add(j);
-                    }
-                    // Check one Runner doesnt have 2 runs in Amc
-                    if (Amc[i].Runner == Amc[j].Runner)
-                    {
-                        // This keeps the first instance of said runner, eg their fastest time
-                        IndexToRemove.Add(j);
-                    }
-                }
-            }
-        }
+        // Clean all lists
+        ResponseCleaner Cleaner = new();
+        Cleaner.RemoveDuplicate(Amc);
 
-        // Remove duplicate entries
-        IndexToRemove = IndexToRemove.Distinct().ToList();
-
-        // Removing backwards to avoid errors
-        IndexToRemove = IndexToRemove.OrderByDescending(o => o).ToList();
-        foreach (int Index in IndexToRemove)
-        {
-            Amc.RemoveAt(Index);
-        }
-
-        // Check if user already has a run on the boards
-        List<string> UserHasBetterScore = new();
-        IndexToRemove = new();
-        for (int i = 0; i < Srm.Count; i++)
-        {
-            if (!UserHasBetterScore.Contains(Srm[i].Runner))
-            {
-                UserHasBetterScore.Add(Srm[i].Runner);
-            }
-            else
-            {
-                IndexToRemove.Add(i);
-            }
-        }
-
-        // Removing backwards to avoid errors
-        IndexToRemove = IndexToRemove.OrderByDescending(o => o).ToList();
-        foreach (int Index in IndexToRemove)
-        {
-            Srm.RemoveAt(Index);
-        }
-
-        // Check if user already has a run on the boards
-        UserHasBetterScore = new();
-        IndexToRemove = new();
-        for (int i = 0; i < Mel.Count; i++)
-        {
-            if (!UserHasBetterScore.Contains(Mel[i].Runner))
-            {
-                UserHasBetterScore.Add(Mel[i].Runner);
-            }
-            else
-            {
-                IndexToRemove.Add(i);
-            }
-        }
-
-        // Removing backwards to avoid errors
-        IndexToRemove = IndexToRemove.OrderByDescending(o => o).ToList();
-        foreach (int Index in IndexToRemove)
-        {
-            Mel.RemoveAt(Index);
-        }
+        Cleaner.GetBestRunFromEachUser(NoSLA);
+        Cleaner.GetBestRunFromEachUser(Amc);
+        Cleaner.GetBestRunFromEachUser(Srm);
+        Cleaner.GetBestRunFromEachUser(Mel);
 
         // Build the enbeded message
         var embed = new EmbedBuilder
@@ -644,121 +370,20 @@ public class Program
             Title = "Friendly Fire ON - Leaderboards"
         };
 
-        // Build NoSLA Text
-        StringBuilder sb = new("");
-        for (int i = 0; i < NoSLA.Count; i++)
-        {
-            switch (i)
-            {
-                case 0:
-                    sb.Append($"1st - {NoSLA[i].Runner} - {NoSLA[i].Time}");
-                    break;
-                case 1:
-                    sb.Append($"\n2nd - {NoSLA[i].Runner} - {NoSLA[i].Time}");
-                    break;
-                case 2:
-                    sb.Append($"\n3rd - {NoSLA[i].Runner} - {NoSLA[i].Time}");
-                    break;
-                case > 2:
-                    sb.Append($"\n{i + 1}th - {NoSLA[i].Runner} - {NoSLA[i].Time}");
-                    break;
-            }
-        }
-
-        if (NoSLA.Count == 0)
-        {
-            sb.Append("No runs available");
-        }
+        // Build all text fields
+        EmbedTextBuilder TextBuilder = new();
 
         embed.AddField("NoSLA",
-            sb.ToString());
-
-        // Build Amc Text
-        sb = new("");
-        for (int i = 0; i < Amc.Count; i++)
-        {
-            switch (i)
-            {
-                case 0:
-                    sb.Append($"1st - {Amc[i].Runner} & {Amc[i].Partner} - {Amc[i].Time}");
-                    break;
-                case 1:
-                    sb.Append($"\n2nd - {Amc[i].Runner} & {Amc[i].Partner} - {Amc[i].Time}");
-                    break;
-                case 2:
-                    sb.Append($"\n3rd - {Amc[i].Runner} & {Amc[i].Partner} - {Amc[i].Time}");
-                    break;
-                case > 2:
-                    sb.Append($"\n{i + 1}th - {Amc[i].Runner} & {Amc[i].Partner} - {Amc[i].Time}");
-                    break;
-            }
-        }
-
-        if (Amc.Count == 0)
-        {
-            sb.Append("No runs available");
-        }
+            TextBuilder.BuildText(NoSLA, true));
 
         embed.AddField("Amc",
-            sb.ToString());
-
-        // Build Srm Text
-        sb = new("");
-        for (int i = 0; i < Srm.Count; i++)
-        {
-            switch (i)
-            {
-                case 0:
-                    sb.Append($"1st - {Srm[i].Runner} - {Srm[i].Time}");
-                    break;
-                case 1:
-                    sb.Append($"\n2nd - {Srm[i].Runner} - {Srm[i].Time}");
-                    break;
-                case 2:
-                    sb.Append($"\n3rd - {Srm[i].Runner} - {Srm[i].Time}");
-                    break;
-                case > 2:
-                    sb.Append($"\n{i + 1}th - {Srm[i].Runner} - {Srm[i].Time}");
-                    break;
-            }
-        }
-
-        if (Srm.Count == 0)
-        {
-            sb.Append("No runs available");
-        }
+            TextBuilder.BuildText(Amc, false));
 
         embed.AddField("Speedrun Mod",
-            sb.ToString());
-
-        // Build Mel Text
-        sb = new("");
-        for (int i = 0; i < Mel.Count; i++)
-        {
-            switch (i)
-            {
-                case 0:
-                    sb.Append($"1st - {Mel[i].Runner} - {Mel[i].Time}");
-                    break;
-                case 1:
-                    sb.Append($"\n2nd - {Mel[i].Runner} - {Mel[i].Time}");
-                    break;
-                case 2:
-                    sb.Append($"\n3rd - {Mel[i].Runner} - {Mel[i].Time}");
-                    break;
-                case > 2:
-                    sb.Append($"\n{i + 1}th - {Mel[i].Runner} - {Mel[i].Time}");
-                    break;
-            }
-        }
-
-        if (Mel.Count == 0)
-        {
-            sb.Append("No runs available");
-        }
+            TextBuilder.BuildText(Srm, true));
 
         embed.AddField("Portal Stories: Mel",
-            sb.ToString())
+            TextBuilder.BuildText(Mel, true))
             // Add the footer to the last field
             .WithFooter(footer => footer.Text = "To get added to the leaderboards, do /add-user");
 
