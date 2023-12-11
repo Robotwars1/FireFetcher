@@ -200,7 +200,7 @@ public class Program
         Users.Add(command.Data.Options.First().Value.ToString());
 
         // Write to Users file
-        JsonFile = File.OpenWrite(UsersFilePath);
+        JsonFile = File.Create(UsersFilePath);
         var Utf8JsonWriter = new Utf8JsonWriter(JsonFile);
         System.Text.Json.JsonSerializer.Serialize(Utf8JsonWriter, Users, _writeOptions);
         JsonFile.Close();
@@ -219,7 +219,7 @@ public class Program
         Users.Remove(command.Data.Options.First().Value.ToString());
 
         // Write to Users file
-        JsonFile = File.OpenWrite(UsersFilePath);
+        JsonFile = File.Create(UsersFilePath);
         var Utf8JsonWriter = new Utf8JsonWriter(JsonFile);
         System.Text.Json.JsonSerializer.Serialize(Utf8JsonWriter, Users, _writeOptions);
         JsonFile.Close();
