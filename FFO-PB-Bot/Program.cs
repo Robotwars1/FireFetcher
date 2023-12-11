@@ -279,6 +279,7 @@ public class Program
         // Clean data to only keep the specific pbs we want to show
         List<CleanedResponse> NoSLA = new();
         List<CleanedResponse> Amc = new();
+        List<CleanedResponse> Srm = new();
 
         for (int i = 0; i < JsonData.Count; i++)
         {
@@ -428,15 +429,75 @@ public class Program
 
                     Amc.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users[i], Partner = SecondPlayer, Time = CleanTime });
                 }
+                // If game is Portal 2 Speedrun Mod and category is Single Player
+                else if (JsonData[i].data[j].run.game == "lde3eme6" && JsonData[i].data[j].run.category == "ndx940vd")
+                {
+                    string DirtyTime = JsonData[i].data[j].run.times.primary;
+
+                    StringBuilder StringBuild = new();
+
+                    string Hour = "";
+                    string Minute = "";
+                    string Second = "";
+                    string MiliSecond = "";
+
+                    int CharIndex = 0;
+
+                    foreach (char Char in DirtyTime)
+                    {
+                        StringBuild.Append(Char);
+
+                        if (StringBuild.ToString().EndsWith("H"))
+                        {
+                            Hour = StringBuild.ToString();
+                            StringBuild = new();
+                        }
+                        else if (StringBuild.ToString().EndsWith("M"))
+                        {
+                            Minute = StringBuild.ToString();
+                            StringBuild = new();
+                        }
+                        else if (StringBuild.ToString().EndsWith(".") || CharIndex == DirtyTime.Length)
+                        {
+                            Second = StringBuild.ToString();
+                            StringBuild = new();
+                        }
+                        else if (StringBuild.ToString().EndsWith("S"))
+                        {
+                            MiliSecond = StringBuild.ToString();
+                            StringBuild = new();
+                        }
+
+                        CharIndex++;
+                    }
+
+                    // Check if Minute and Second are missing a 0 in front (basicly if they are less than 10
+                    if (Minute.Length == 2)
+                    {
+                        Minute = Minute.Insert(0, "0");
+                    }
+                    if (Second.Length == 2)
+                    {
+                        Second = Second.Insert(0, "0");
+                    }
+
+                    DirtyTime = "" + Hour + Minute + Second + MiliSecond;
+
+                    // Translate time
+                    string CleanTime = DirtyTime.Replace("PT", "").Replace("H", ":").Replace("M", ":").Replace("S", "");
+
+                    Srm.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users[i], Time = CleanTime });
+                }
             }
         }
 
         // Sort pbs to find out who is first in each cat
         NoSLA = NoSLA.OrderBy(o => o.Place).ToList();
         Amc = Amc.OrderBy(o => o.Place).ToList();
+        Srm = Srm.OrderBy(o => o.Place).ToList();
 
+        // Remove duplicate amc stuff
         List<int> IndexToRemove = new();
-
         for (int i = 0; i < Amc.Count; i++)
         {
             for (int j = 0; j < Amc.Count; j++)
@@ -467,6 +528,28 @@ public class Program
         foreach (int Index in IndexToRemove)
         {
             Amc.RemoveAt(Index);
+        }
+
+        // Check if user already has a run on the boards
+        List<string> UserHasBetterScore = new();
+        IndexToRemove = new();
+        for (int i = 0; i < Srm.Count; i++)
+        {
+            if (!UserHasBetterScore.Contains(Srm[i].Runner))
+            {
+                UserHasBetterScore.Add(Srm[i].Runner);
+            }
+            else
+            {
+                IndexToRemove.Add(i);
+            }
+        }
+
+        // Removing backwards to avoid errors
+        IndexToRemove = IndexToRemove.OrderByDescending(o => o).ToList();
+        foreach (int Index in IndexToRemove)
+        {
+            Srm.RemoveAt(Index);
         }
 
         // Build the enbeded message
@@ -532,6 +615,35 @@ public class Program
         }
 
         embed.AddField("Amc",
+            sb.ToString());
+
+        // Build Srm Text
+        sb = new("");
+        for (int i = 0; i < Srm.Count; i++)
+        {
+            switch (i)
+            {
+                case 0:
+                    sb.Append($"1st - {Srm[i].Runner} - {Srm[i].Time}");
+                    break;
+                case 1:
+                    sb.Append($"\n2nd - {Srm[i].Runner} - {Srm[i].Time}");
+                    break;
+                case 2:
+                    sb.Append($"\n3rd - {Srm[i].Runner} - {Srm[i].Time}");
+                    break;
+                case > 2:
+                    sb.Append($"\n{i + 1}th - {Srm[i].Runner} - {Srm[i].Time}");
+                    break;
+            }
+        }
+
+        if (Srm.Count == 0)
+        {
+            sb.Append("No runs available");
+        }
+
+        embed.AddField("Speedrun Mod",
             sb.ToString());
 
         // If leaderboard doesnt exist, send it
