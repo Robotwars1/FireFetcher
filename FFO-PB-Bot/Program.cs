@@ -64,6 +64,8 @@ public class Program
         public string sla { get; set; }
         [JsonPropertyName("38dj54e8")]
         public string amc { get; set; }
+        [JsonPropertyName("wl333p9l")]
+        public string MelInbounds { get; set; }
     }
 
     public class SrcProfileResponse
@@ -280,6 +282,7 @@ public class Program
         List<CleanedResponse> NoSLA = new();
         List<CleanedResponse> Amc = new();
         List<CleanedResponse> Srm = new();
+        List<CleanedResponse> Mel = new();
 
         for (int i = 0; i < JsonData.Count; i++)
         {
@@ -488,6 +491,65 @@ public class Program
 
                     Srm.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users[i], Time = CleanTime });
                 }
+                // If game is Portal Stories Mel and category is Story Mode and is Inbounds
+                else if (JsonData[i].data[j].run.game == "j1nz9l1p" && JsonData[i].data[j].run.category == "q25oowgk" && JsonData[i].data[j].run.values.MelInbounds == "4lx8vp31")
+                {
+                    string DirtyTime = JsonData[i].data[j].run.times.primary;
+
+                    StringBuilder StringBuild = new();
+
+                    string Hour = "";
+                    string Minute = "";
+                    string Second = "";
+                    string MiliSecond = "";
+
+                    int CharIndex = 0;
+
+                    foreach (char Char in DirtyTime)
+                    {
+                        StringBuild.Append(Char);
+
+                        if (StringBuild.ToString().EndsWith("H"))
+                        {
+                            Hour = StringBuild.ToString();
+                            StringBuild = new();
+                        }
+                        else if (StringBuild.ToString().EndsWith("M"))
+                        {
+                            Minute = StringBuild.ToString();
+                            StringBuild = new();
+                        }
+                        else if (StringBuild.ToString().EndsWith(".") || CharIndex == DirtyTime.Length)
+                        {
+                            Second = StringBuild.ToString();
+                            StringBuild = new();
+                        }
+                        else if (StringBuild.ToString().EndsWith("S"))
+                        {
+                            MiliSecond = StringBuild.ToString();
+                            StringBuild = new();
+                        }
+
+                        CharIndex++;
+                    }
+
+                    // Check if Minute and Second are missing a 0 in front (basicly if they are less than 10
+                    if (Minute.Length == 2)
+                    {
+                        Minute = Minute.Insert(0, "0");
+                    }
+                    if (Second.Length == 2)
+                    {
+                        Second = Second.Insert(0, "0");
+                    }
+
+                    DirtyTime = "" + Hour + Minute + Second + MiliSecond;
+
+                    // Translate time
+                    string CleanTime = DirtyTime.Replace("PT", "").Replace("H", ":").Replace("M", ":").Replace("S", "");
+
+                    Mel.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users[i], Time = CleanTime });
+                }
             }
         }
 
@@ -495,6 +557,7 @@ public class Program
         NoSLA = NoSLA.OrderBy(o => o.Place).ToList();
         Amc = Amc.OrderBy(o => o.Place).ToList();
         Srm = Srm.OrderBy(o => o.Place).ToList();
+        Mel = Mel.OrderBy(o => o.Place).ToList();
 
         // Remove duplicate amc stuff
         List<int> IndexToRemove = new();
@@ -550,6 +613,28 @@ public class Program
         foreach (int Index in IndexToRemove)
         {
             Srm.RemoveAt(Index);
+        }
+
+        // Check if user already has a run on the boards
+        UserHasBetterScore = new();
+        IndexToRemove = new();
+        for (int i = 0; i < Mel.Count; i++)
+        {
+            if (!UserHasBetterScore.Contains(Mel[i].Runner))
+            {
+                UserHasBetterScore.Add(Mel[i].Runner);
+            }
+            else
+            {
+                IndexToRemove.Add(i);
+            }
+        }
+
+        // Removing backwards to avoid errors
+        IndexToRemove = IndexToRemove.OrderByDescending(o => o).ToList();
+        foreach (int Index in IndexToRemove)
+        {
+            Mel.RemoveAt(Index);
         }
 
         // Build the enbeded message
@@ -644,6 +729,35 @@ public class Program
         }
 
         embed.AddField("Speedrun Mod",
+            sb.ToString());
+
+        // Build Mel Text
+        sb = new("");
+        for (int i = 0; i < Mel.Count; i++)
+        {
+            switch (i)
+            {
+                case 0:
+                    sb.Append($"1st - {Mel[i].Runner} - {Mel[i].Time}");
+                    break;
+                case 1:
+                    sb.Append($"\n2nd - {Mel[i].Runner} - {Mel[i].Time}");
+                    break;
+                case 2:
+                    sb.Append($"\n3rd - {Mel[i].Runner} - {Mel[i].Time}");
+                    break;
+                case > 2:
+                    sb.Append($"\n{i + 1}th - {Mel[i].Runner} - {Mel[i].Time}");
+                    break;
+            }
+        }
+
+        if (Mel.Count == 0)
+        {
+            sb.Append("No runs available");
+        }
+
+        embed.AddField("Portal Stories: Mel",
             sb.ToString());
 
         // If leaderboard doesnt exist, send it
