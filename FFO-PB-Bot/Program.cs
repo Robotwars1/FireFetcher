@@ -641,7 +641,7 @@ public class Program
         var embed = new EmbedBuilder
         {
             // Embed property can be set within object initializer
-            Title = "Friendly Fire ON - Leaderboards",
+            Title = "Friendly Fire ON - Leaderboards"
         };
 
         // Build NoSLA Text
@@ -758,7 +758,9 @@ public class Program
         }
 
         embed.AddField("Portal Stories: Mel",
-            sb.ToString());
+            sb.ToString())
+            // Add the footer to the last field
+            .WithFooter(footer => footer.Text = "To get added to the leaderboards, do /add-user");
 
         // If leaderboard doesnt exist, send it
         if (LeaderboardMessage == null)
