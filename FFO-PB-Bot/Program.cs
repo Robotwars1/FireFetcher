@@ -14,6 +14,8 @@ public class Program
     IMessageChannel Channel;
     IUserMessage LeaderboardMessage;
 
+    List<string> Users = new();
+
     string UsersFilePath = "Data/Users.json";
 
     private readonly JsonSerializerOptions _readOptions = new()
@@ -98,6 +100,11 @@ public class Program
         // Read bot-token
         // DO NOT MAKE TOKEN PUBLIC
         var token = File.ReadAllText("Token.txt");
+
+        // Read current Users list
+        FileStream JsonFile = File.OpenRead(UsersFilePath);
+        Users = System.Text.Json.JsonSerializer.Deserialize<List<string>>(JsonFile, _readOptions);
+        JsonFile.Close();
 
         // Start bot
         await Client.LoginAsync(TokenType.Bot, token);
@@ -191,16 +198,11 @@ public class Program
 
     private async Task HandleAddUserCommand(SocketSlashCommand command)
     {
-        // Read current Users list
-        FileStream JsonFile = File.OpenRead(UsersFilePath);
-        List<string> Users = System.Text.Json.JsonSerializer.Deserialize<List<string>>(JsonFile, _readOptions);
-        JsonFile.Close();
-
         // Add inputet user to Users list
         Users.Add(command.Data.Options.First().Value.ToString());
 
         // Write to Users file
-        JsonFile = File.Create(UsersFilePath);
+        FileStream JsonFile = File.Create(UsersFilePath);
         var Utf8JsonWriter = new Utf8JsonWriter(JsonFile);
         System.Text.Json.JsonSerializer.Serialize(Utf8JsonWriter, Users, _writeOptions);
         JsonFile.Close();
@@ -210,16 +212,11 @@ public class Program
 
     private async Task HandleRemoveUserCommand(SocketSlashCommand command)
     {
-        // Read current Users list
-        FileStream JsonFile = File.OpenRead(UsersFilePath);
-        List<string> Users = System.Text.Json.JsonSerializer.Deserialize<List<string>>(JsonFile, _readOptions);
-        JsonFile.Close();
-
         // Remove inputet user from Users list
         Users.Remove(command.Data.Options.First().Value.ToString());
 
         // Write to Users file
-        JsonFile = File.Create(UsersFilePath);
+        FileStream JsonFile = File.Create(UsersFilePath);
         var Utf8JsonWriter = new Utf8JsonWriter(JsonFile);
         System.Text.Json.JsonSerializer.Serialize(Utf8JsonWriter, Users, _writeOptions);
         JsonFile.Close();
