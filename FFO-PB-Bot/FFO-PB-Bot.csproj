@@ -9,12 +9,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Data\Channel.json" />
     <None Remove="Data\Message.json" />
     <None Remove="Data\Users.json" />
     <None Remove="Token.txt" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Data\Channel.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="Data\Message.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

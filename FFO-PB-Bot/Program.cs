@@ -3,7 +3,6 @@ using Discord.Net;
 using Discord.WebSocket;
 using FFO_PB_Bot;
 using Newtonsoft.Json;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -12,6 +11,7 @@ public class Program
     public static Task Main(string[] args) => new Program().MainAsync();
 
     private DiscordSocketClient Client;
+
     IMessageChannel Channel;
 
     ulong LeaderboardMessageId;
@@ -21,6 +21,7 @@ public class Program
     // Paths to each .json file
     string UsersFilePath = "Data/Users.json";
     string MessageFilePath = "Data/Message.json";
+    string ChannelFilePath = "Data/Channel.json";
 
     private readonly JsonSerializerOptions _readOptions = new()
     {
@@ -186,6 +187,19 @@ public class Program
             // You can send this error somewhere or just print it to the console, for this example we're just going to print it.
             Console.WriteLine(json);
         }
+
+        // Read channel id
+        // Gets channel id later than everything else cause it doesnt work otherwise ¯\_(ツ)_/¯
+        FileStream JsonFile = File.OpenRead(ChannelFilePath);
+        try
+        {
+            Channel = Client.GetChannel(System.Text.Json.JsonSerializer.Deserialize<ulong>(JsonFile, _readOptions)) as IMessageChannel;
+        }
+        catch
+        {
+            Console.WriteLine("Failed to get channel from Channel.json");
+        }
+        JsonFile.Close();
     }
 
     private async Task SlashCommandHandler(SocketSlashCommand command)
@@ -210,6 +224,12 @@ public class Program
     private async Task HandleSetChannelCommand(SocketSlashCommand command)
     {
         Channel = command.Data.Options.First().Value as IMessageChannel;
+
+        // Write the new ChannelId to Channel.json
+        FileStream MessageJsonFile = File.Create(ChannelFilePath);
+        var Utf8JsonWriter = new Utf8JsonWriter(MessageJsonFile);
+        System.Text.Json.JsonSerializer.Serialize(Utf8JsonWriter, Channel.Id, _writeOptions);
+        MessageJsonFile.Close();
 
         await command.RespondAsync($"Leaderboard will be sent in {command.Data.Options.First().Value} from now on", ephemeral: true);
     }
@@ -409,7 +429,7 @@ public class Program
 
             LeaderboardMessageId = LeaderboardMessage.Id;
 
-            // Write the new message to Message.json
+            // Write the new messageid to Message.json
             FileStream MessageJsonFile = File.Create(MessageFilePath);
             var Utf8JsonWriter = new Utf8JsonWriter(MessageJsonFile);
             System.Text.Json.JsonSerializer.Serialize(Utf8JsonWriter, LeaderboardMessageId, _writeOptions);
