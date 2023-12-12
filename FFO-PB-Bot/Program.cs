@@ -231,6 +231,15 @@ public class Program
         System.Text.Json.JsonSerializer.Serialize(Utf8JsonWriter, Channel.Id, _writeOptions);
         MessageJsonFile.Close();
 
+        // Also reset MessageId to avoid dumb crashed / force the bot to resend leaderboard
+        LeaderboardMessageId = 0;
+
+        // Write the new messageid to Message.json
+        FileStream JsonFile = File.Create(MessageFilePath);
+        Utf8JsonWriter = new Utf8JsonWriter(JsonFile);
+        System.Text.Json.JsonSerializer.Serialize(Utf8JsonWriter, LeaderboardMessageId, _writeOptions);
+        JsonFile.Close();
+
         await command.RespondAsync($"Leaderboard will be sent in {command.Data.Options.First().Value} from now on", ephemeral: true);
     }
 
