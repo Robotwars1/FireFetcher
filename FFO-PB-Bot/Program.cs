@@ -13,11 +13,14 @@ public class Program
 
     private DiscordSocketClient Client;
     IMessageChannel Channel;
-    IUserMessage LeaderboardMessage;
+
+    ulong LeaderboardMessageId;
 
     List<string> Users = new();
 
+    // Paths to each .json file
     string UsersFilePath = "Data/Users.json";
+    string MessageFilePath = "Data/Message.json";
 
     private readonly JsonSerializerOptions _readOptions = new()
     {
@@ -107,6 +110,18 @@ public class Program
         // Read current Users list
         FileStream JsonFile = File.OpenRead(UsersFilePath);
         Users = System.Text.Json.JsonSerializer.Deserialize<List<string>>(JsonFile, _readOptions);
+        JsonFile.Close();
+
+        // Read message id
+        JsonFile = File.OpenRead(MessageFilePath);
+        try
+        {
+            LeaderboardMessageId = System.Text.Json.JsonSerializer.Deserialize<ulong>(JsonFile, _readOptions);
+        }
+        catch
+        {
+            Console.WriteLine("Failed to get id from Message.json");
+        }
         JsonFile.Close();
 
         // Start bot
@@ -388,14 +403,22 @@ public class Program
             .WithFooter(footer => footer.Text = "To get added to the leaderboards, do /add-user");
 
         // If leaderboard doesnt exist, send it
-        if (LeaderboardMessage == null)
+        if (LeaderboardMessageId == 0)
         {
-            LeaderboardMessage = await Channel.SendMessageAsync(embed: embed.Build());
+            IUserMessage LeaderboardMessage = await Channel.SendMessageAsync(embed: embed.Build());
+
+            LeaderboardMessageId = LeaderboardMessage.Id;
+
+            // Write the new message to Message.json
+            FileStream MessageJsonFile = File.Create(MessageFilePath);
+            var Utf8JsonWriter = new Utf8JsonWriter(MessageJsonFile);
+            System.Text.Json.JsonSerializer.Serialize(Utf8JsonWriter, LeaderboardMessageId, _writeOptions);
+            MessageJsonFile.Close();
         }
         // Else, edit it
         else
         {
-            await LeaderboardMessage.ModifyAsync(x =>
+            await Channel.ModifyMessageAsync(LeaderboardMessageId, x =>
             {
                 x.Embed = embed.Build();
             });
