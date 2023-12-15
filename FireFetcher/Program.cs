@@ -1,10 +1,12 @@
 ﻿using Discord;
 using Discord.Net;
 using Discord.WebSocket;
-using FFO_PB_Bot;
 using Newtonsoft.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+
+// Thingy to call other classes (in other .cs files)
+using FireFetcher;
 
 public class Program
 {
@@ -19,9 +21,9 @@ public class Program
     List<string> Users = new();
 
     // Paths to each .json file
-    string UsersFilePath = "Data/Users.json";
-    string MessageFilePath = "Data/Message.json";
-    string ChannelFilePath = "Data/Channel.json";
+    const string UsersFilePath = "Data/Users.json";
+    const string MessageFilePath = "Data/Message.json";
+    const string ChannelFilePath = "Data/Channel.json";
 
     private readonly JsonSerializerOptions _readOptions = new()
     {
@@ -307,13 +309,11 @@ public class Program
 
             var response = await client.GetAsync(Url);
 
-            // If the response is successful, we'll 
-            // interpret the response as XML 
             if (response.IsSuccessStatusCode)
             {
                 var json = await response.Content.ReadAsStringAsync();
 
-                // We can then use the LINQ to XML API to query the XML 
+                // Parse the contents as a .json
                 SrcResponse TempDataHolder = System.Text.Json.JsonSerializer.Deserialize<SrcResponse>(json, _readOptions);
                 JsonData.Add(TempDataHolder);
             }
@@ -410,7 +410,6 @@ public class Program
         // Build the enbeded message
         var embed = new EmbedBuilder
         {
-            // Embed property can be set within object initializer
             Title = "Friendly Fire ON - Leaderboards"
         };
 

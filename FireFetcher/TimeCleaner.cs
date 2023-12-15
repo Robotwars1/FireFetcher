@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace FFO_PB_Bot
+namespace FireFetcher
 {
     internal class TimeCleaner
     {
