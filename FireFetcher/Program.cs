@@ -18,7 +18,7 @@ public class Program
 
     ulong LeaderboardMessageId;
 
-    List<string> Users = new();
+    Dictionary<string, string> Users = new();
 
     // Paths to each .json file
     const string UsersFilePath = "Data/Users.json";
@@ -90,6 +90,37 @@ public class Program
         public string international { get; set; }
     }
 
+    public class BoardsResponse
+    {
+        public BoardsTimes times { get; set; }
+    }
+
+    public class BoardsTimes
+    {
+        public SP SP { get; set; }
+    }
+
+    public class SP
+    {
+        public Chambers chambers { get; set; }
+    }
+
+    public class Chambers
+    {
+        public BestRank bestRank { get; set; }
+    }
+
+    public class BestRank
+    {
+        public ScoreData scoreData { get; set; }
+        public int map { get; set; }
+    }
+
+    public class ScoreData
+    {
+        public string playerRank { get; set; }
+    }
+
     // Classes for cleaned data
     public class CleanedResponse
     {
@@ -97,6 +128,7 @@ public class Program
         public string Partner { get; set; }
         public int Place { get; set; }
         public string Time { get; set; }
+        public string Map { get; set; }
     }
 
     public async Task MainAsync()
@@ -112,7 +144,14 @@ public class Program
 
         // Read current Users list
         FileStream JsonFile = File.OpenRead(UsersFilePath);
-        Users = System.Text.Json.JsonSerializer.Deserialize<List<string>>(JsonFile, _readOptions);
+        try
+        {
+            Users = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(JsonFile, _readOptions);
+        }
+        catch
+        {
+            Console.WriteLine("Failed to get users from Users.json");
+        }
         JsonFile.Close();
 
         // Read message id
@@ -160,13 +199,15 @@ public class Program
         var AddUserCommand = new SlashCommandBuilder()
             .WithName("add-user")
             .WithDescription("Adds a user to be included in the leaderboard updates")
-            .AddOption("username", ApplicationCommandOptionType.String, "Speedrun.com username", isRequired: true);
+            .AddOption("src-username", ApplicationCommandOptionType.String, "Speedrun.com username", isRequired: true)
+            .AddOption("cm-board-username", ApplicationCommandOptionType.String, "board.portal2.sr username", isRequired: true);
 
         // Command for removing user from leaderboard
         var RemoveUserCommand = new SlashCommandBuilder()
             .WithName("remove-user")
             .WithDescription("Removes a user from the leaderboard")
-            .AddOption("username", ApplicationCommandOptionType.String, "Speedrun.com username", isRequired: true);
+            .AddOption("src-username", ApplicationCommandOptionType.String, "Speedrun.com username", isRequired: true)
+            .AddOption("cm-board-username", ApplicationCommandOptionType.String, "board.portal2.sr username", isRequired: true);
 
         // Command for updating leaderboard
         var UpdateLeaderboardCommand = new SlashCommandBuilder()
@@ -248,7 +289,7 @@ public class Program
     private async Task HandleAddUserCommand(SocketSlashCommand command)
     {
         // Add inputet user to Users list
-        Users.Add(command.Data.Options.First().Value.ToString());
+        Users.Add(command.Data.Options.First().Value.ToString(), command.Data.Options.ElementAt(1).Value.ToString());
 
         // Write to Users file
         FileStream JsonFile = File.Create(UsersFilePath);
@@ -287,13 +328,14 @@ public class Program
     private async Task GetPersonalBests()
     {
         List<SrcResponse> JsonData = new();
+        List<BoardsResponse> RawBoardsData = new();
 
         // Get users
         FileStream JsonFile = File.OpenRead(UsersFilePath);
-        List<string> Users = System.Text.Json.JsonSerializer.Deserialize<List<string>>(JsonFile, _readOptions);
+        Users = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(JsonFile, _readOptions);
         JsonFile.Close();
 
-        foreach (string User in Users)
+        foreach (string User in Users.Keys)
         {
             // Get speedrun.com pbs
             var client = new HttpClient();
@@ -317,8 +359,31 @@ public class Program
                 SrcResponse TempDataHolder = System.Text.Json.JsonSerializer.Deserialize<SrcResponse>(json, _readOptions);
                 JsonData.Add(TempDataHolder);
             }
+        }
 
+        foreach (string User in Users.Values)
+        {
             // Get board.portal2.sr pbs
+            var client = new HttpClient();
+
+            UriBuilder UriBuilder = new();
+            UriBuilder.Scheme = "http";
+            UriBuilder.Host = "board.portal2.sr";
+            UriBuilder.Path = "profile/";
+            UriBuilder.Path += $"{User}/";
+            UriBuilder.Path += "json";
+            string Url = UriBuilder.ToString();
+
+            var response = await client.GetAsync(Url);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+
+                // Parse the contents as a .json
+                BoardsResponse TempHolder = System.Text.Json.JsonSerializer.Deserialize<BoardsResponse>(json, _readOptions);
+                RawBoardsData.Add(TempHolder);
+            }
         }
 
         // Clean data to only keep the specific pbs we want to show
@@ -327,8 +392,11 @@ public class Program
         List<CleanedResponse> Srm = new();
         List<CleanedResponse> Mel = new();
 
+        List<CleanedResponse> Cm = new();
+
         TimeCleaner TimeClean = new();
 
+        // Clean and parse src runs
         for (int i = 0; i < JsonData.Count; i++)
         {
             for (int j = 0; j < JsonData[i].data.Count; j++)
@@ -339,7 +407,7 @@ public class Program
                     // Call function to clean the time
                     string CleanTime = TimeClean.Clean(JsonData[i].data[j].run.times.primary);
 
-                    NoSLA.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users[i], Time = CleanTime });
+                    NoSLA.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users.ElementAt(i).Key, Time = CleanTime });
                 }
                 // If game is Portal 2 and category coop and it is Amc
                 else if (JsonData[i].data[j].run.game == "om1mw4d2" && JsonData[i].data[j].run.category == "l9kv40kg" && JsonData[i].data[j].run.values.amc == "mln3x8nq")
@@ -363,7 +431,7 @@ public class Program
                             SrcProfileResponse ProfileData = System.Text.Json.JsonSerializer.Deserialize<SrcProfileResponse>(json, _readOptions);
                             
                             // Check that we grabbed the other player
-                            if (ProfileData.data.names.international != Users[i])
+                            if (ProfileData.data.names.international != Users.ElementAt(i).Key)
                             {
                                 SecondPlayer = ProfileData.data.names.international;
                                 break;
@@ -371,7 +439,7 @@ public class Program
                         }
                     }
 
-                    Amc.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users[i], Partner = SecondPlayer, Time = CleanTime });
+                    Amc.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users.ElementAt(i).Key, Partner = SecondPlayer, Time = CleanTime });
                 }
                 // If game is Portal 2 Speedrun Mod and category is Single Player
                 else if (JsonData[i].data[j].run.game == "lde3eme6" && JsonData[i].data[j].run.category == "ndx940vd")
@@ -379,7 +447,7 @@ public class Program
                     // Call function to clean the time
                     string CleanTime = TimeClean.Clean(JsonData[i].data[j].run.times.primary);
 
-                    Srm.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users[i], Time = CleanTime });
+                    Srm.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users.ElementAt(i).Key, Time = CleanTime });
                 }
                 // If game is Portal Stories Mel and category is Story Mode and is Inbounds
                 else if (JsonData[i].data[j].run.game == "j1nz9l1p" && JsonData[i].data[j].run.category == "q25oowgk" && JsonData[i].data[j].run.values.MelInbounds == "4lx8vp31")
@@ -387,8 +455,22 @@ public class Program
                     // Call function to clean the time
                     string CleanTime = TimeClean.Clean(JsonData[i].data[j].run.times.primary);
 
-                    Mel.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users[i], Time = CleanTime });
+                    Mel.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users.ElementAt(i).Key, Time = CleanTime });
                 }
+            }
+        }
+
+        // Clean and parse CM runs
+        CmMapParser MapParser = new();
+        for (int i = 0; i < RawBoardsData.Count; i++)
+        {
+            try
+            {
+                Cm.Add(new CleanedResponse() { Runner = Users.ElementAt(i).Value, Place = int.Parse(RawBoardsData[i].times.SP.chambers.bestRank.scoreData.playerRank), Map = MapParser.ParseMap(RawBoardsData[i].times.SP.chambers.bestRank.map) });
+            }
+            catch
+            {
+                Console.WriteLine($"Failed to parse cm data for {Users.ElementAt(i).Value}");
             }
         }
 
@@ -397,6 +479,8 @@ public class Program
         Amc = Amc.OrderBy(o => o.Place).ToList();
         Srm = Srm.OrderBy(o => o.Place).ToList();
         Mel = Mel.OrderBy(o => o.Place).ToList();
+
+        Cm = Cm.OrderBy(o => o.Place).ToList();
 
         // Clean all lists
         ResponseCleaner Cleaner = new();
@@ -417,16 +501,19 @@ public class Program
         EmbedTextBuilder TextBuilder = new();
 
         embed.AddField("NoSLA",
-            TextBuilder.BuildText(NoSLA, true));
+            TextBuilder.BuildText(NoSLA, true, false));
 
         embed.AddField("Amc",
-            TextBuilder.BuildText(Amc, false));
+            TextBuilder.BuildText(Amc, false, false));
 
         embed.AddField("Speedrun Mod",
-            TextBuilder.BuildText(Srm, true));
+            TextBuilder.BuildText(Srm, true, false));
 
         embed.AddField("Portal Stories: Mel",
-            TextBuilder.BuildText(Mel, true))
+            TextBuilder.BuildText(Mel, true, false));
+
+        embed.AddField("SP CM Best Place",
+            TextBuilder.BuildText(Cm, true, true))
             // Add the footer to the last field
             .WithFooter(footer => footer.Text = "To get added to the leaderboards, do /add-user");
 

@@ -4,40 +4,89 @@ namespace FireFetcher
 {
     internal class EmbedTextBuilder
     {
-        public string BuildText(List<Program.CleanedResponse> List, bool Singleplayer)
+        public string BuildText(List<Program.CleanedResponse> List, bool Singleplayer, bool Cm)
         {
             if (Singleplayer)
             {
-                // If empty list
-                if (List.Count == 0)
+                if (Cm)
                 {
-                    return "No runs available";
+                    // If empty list
+                    if (List.Count == 0)
+                    {
+                        return "No runs available";
+                    }
+                    // Else, meaning list has content
+                    else
+                    {
+                        int LastPlace = 0;
+                        int Offset = 0;
+
+                        StringBuilder Sb = new("");
+                        for (int i = 0; i < List.Count; i++)
+                        {
+                            if (List[i].Place == LastPlace)
+                            {
+                                Offset++;
+                            }
+
+                            int Position = i - Offset;
+
+                            switch (Position)
+                            {
+                                case 0:
+                                    Sb.Append($"1st - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
+                                    break;
+                                case 1:
+                                    Sb.Append($"\n2nd - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
+                                    break;
+                                case 2:
+                                    Sb.Append($"\n3rd - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
+                                    break;
+                                case > 2:
+                                    Sb.Append($"\n{i}th - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
+                                    break;
+                            }
+
+                            LastPlace = List[i].Place;
+                        }
+
+                        // Return the newly created leaderboards text
+                        return Sb.ToString();
+                    }
                 }
-                // Else, meaning list has content
                 else
                 {
-                    StringBuilder Sb = new("");
-                    for (int i = 0; i < List.Count; i++)
+                    // If empty list
+                    if (List.Count == 0)
                     {
-                        switch (i)
-                        {
-                            case 0:
-                                Sb.Append($"1st - {List[i].Runner} - {List[i].Time}");
-                                break;
-                            case 1:
-                                Sb.Append($"\n2nd - {List[i].Runner} - {List[i].Time}");
-                                break;
-                            case 2:
-                                Sb.Append($"\n3rd - {List[i].Runner} - {List[i].Time}");
-                                break;
-                            case > 2:
-                                Sb.Append($"\n{i + 1}th - {List[i].Runner} - {List[i].Time}");
-                                break;
-                        }
+                        return "No runs available";
                     }
+                    // Else, meaning list has content
+                    else
+                    {
+                        StringBuilder Sb = new("");
+                        for (int i = 0; i < List.Count; i++)
+                        {
+                            switch (i)
+                            {
+                                case 0:
+                                    Sb.Append($"1st - {List[i].Runner} - {List[i].Time}");
+                                    break;
+                                case 1:
+                                    Sb.Append($"\n2nd - {List[i].Runner} - {List[i].Time}");
+                                    break;
+                                case 2:
+                                    Sb.Append($"\n3rd - {List[i].Runner} - {List[i].Time}");
+                                    break;
+                                case > 2:
+                                    Sb.Append($"\n{i + 1}th - {List[i].Runner} - {List[i].Time}");
+                                    break;
+                            }
+                        }
 
-                    // Return the newly created leaderboards text
-                    return Sb.ToString();
+                        // Return the newly created leaderboards text
+                        return Sb.ToString();
+                    }
                 }
             }
             // If Coop
@@ -74,6 +123,27 @@ namespace FireFetcher
                     // Return the newly created leaderboards text
                     return Sb.ToString();
                 }
+            }
+        }
+
+        private string ConvertPlace(int Place)
+        {
+            // Modulo 10 since we want end digit
+            if (Place % 10 == 1 && Place != 11)
+            {
+                return $"{Place}st";
+            }
+            else if (Place % 10 == 2 && Place != 12)
+            {
+                return $"{Place}nd";
+            }
+            else if (Place % 10 == 3 && Place != 13)
+            {
+                return $"{Place}rd";
+            }
+            else
+            {
+                return $"{Place}th";
             }
         }
     }
