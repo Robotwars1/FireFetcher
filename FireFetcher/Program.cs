@@ -186,9 +186,6 @@ public class Program
 
     public async Task Client_Ready()
     {
-        // Let's build a guild command! We're going to need a guild so lets just put that in a variable.
-        var guild = Client.GetGuild(1004897099017637979);
-
         // Command for setting which server channel to send leaderboard in
         var SetChannelCommand = new SlashCommandBuilder()
             .WithName("set-channel")
@@ -217,10 +214,10 @@ public class Program
         try
         {
             // Create each slash command
-            await guild.CreateApplicationCommandAsync(SetChannelCommand.Build());
-            await guild.CreateApplicationCommandAsync(AddUserCommand.Build());
-            await guild.CreateApplicationCommandAsync(RemoveUserCommand.Build());
-            await guild.CreateApplicationCommandAsync(UpdateLeaderboardCommand.Build());
+            await Client.CreateGlobalApplicationCommandAsync(SetChannelCommand.Build());
+            await Client.CreateGlobalApplicationCommandAsync(AddUserCommand.Build());
+            await Client.CreateGlobalApplicationCommandAsync(RemoveUserCommand.Build());
+            await Client.CreateGlobalApplicationCommandAsync(UpdateLeaderboardCommand.Build());
         }
         catch (HttpException exception)
         {
