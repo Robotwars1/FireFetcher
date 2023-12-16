@@ -43,7 +43,7 @@ namespace FireFetcher
                                     Sb.Append($"\n3rd - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
                                     break;
                                 case > 2:
-                                    Sb.Append($"\n{i}th - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
+                                    Sb.Append($"\n{i + 1 - Offset}th - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
                                     break;
                             }
 
