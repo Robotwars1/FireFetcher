@@ -180,7 +180,9 @@ public class Program
 
     private Task Log(LogMessage msg)
     {
-        Console.WriteLine(msg.ToString());
+        Logger Logger = new();
+        Logger.GeneralLog(msg.ToString());
+
         return Task.CompletedTask;
     }
 
@@ -244,6 +246,9 @@ public class Program
 
     private async Task SlashCommandHandler(SocketSlashCommand command)
     {
+        Logger Logger = new();
+        Logger.CommandLog(command.Data.Name, command.User.ToString());
+
         switch (command.Data.Name)
         {
             case "set-channel":
