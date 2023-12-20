@@ -39,7 +39,7 @@ namespace FireFetcher
         public void CommandLog(string CommandName, string User)
         {
             // Write command logging to console
-            Console.WriteLine($"[{DateTime.Now}] {User} used the command {CommandName}")
+            Console.WriteLine($"[{DateTime.Now}] {User} used the command {CommandName}");
 
             if (!Directory.Exists(LogFolder))
             {

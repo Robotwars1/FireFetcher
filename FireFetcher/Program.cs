@@ -276,6 +276,9 @@ public class Program
         System.Text.Json.JsonSerializer.Serialize(Utf8JsonWriter, Channel.Id, _writeOptions);
         MessageJsonFile.Close();
 
+        Logger Logger = new();
+        Logger.JsonLog(Channel.Id.ToString(), ChannelFilePath);
+
         // Also reset MessageId to avoid dumb crashed / force the bot to resend leaderboard
         LeaderboardMessageId = 0;
 
@@ -284,6 +287,8 @@ public class Program
         Utf8JsonWriter = new Utf8JsonWriter(JsonFile);
         System.Text.Json.JsonSerializer.Serialize(Utf8JsonWriter, LeaderboardMessageId, _writeOptions);
         JsonFile.Close();
+
+        Logger.JsonLog(LeaderboardMessageId.ToString(), MessageFilePath);
 
         await command.RespondAsync($"Leaderboard will be sent in {command.Data.Options.First().Value} from now on", ephemeral: true);
     }
@@ -298,6 +303,9 @@ public class Program
         var Utf8JsonWriter = new Utf8JsonWriter(JsonFile);
         System.Text.Json.JsonSerializer.Serialize(Utf8JsonWriter, Users, _writeOptions);
         JsonFile.Close();
+
+        Logger Logger = new();
+        Logger.JsonLog(Users.ToString(), UsersFilePath);
 
         await command.RespondAsync($"Added user {command.Data.Options.First().Value} to leaderboard", ephemeral: true);
 
@@ -314,6 +322,9 @@ public class Program
         var Utf8JsonWriter = new Utf8JsonWriter(JsonFile);
         System.Text.Json.JsonSerializer.Serialize(Utf8JsonWriter, Users, _writeOptions);
         JsonFile.Close();
+
+        Logger Logger = new();
+        Logger.JsonLog(Users.ToString(), UsersFilePath);
 
         await command.RespondAsync($"Removed user {command.Data.Options.First().Value} from leaderboard", ephemeral: true);
 
@@ -531,6 +542,9 @@ public class Program
             var Utf8JsonWriter = new Utf8JsonWriter(MessageJsonFile);
             System.Text.Json.JsonSerializer.Serialize(Utf8JsonWriter, LeaderboardMessageId, _writeOptions);
             MessageJsonFile.Close();
+
+            Logger Logger = new();
+            Logger.JsonLog(LeaderboardMessageId.ToString(), MessageFilePath);
         }
         // Else, edit it
         else
