@@ -113,7 +113,7 @@ public class Program
     public class BestRank
     {
         public ScoreData scoreData { get; set; }
-        public int map { get; set; }
+        public object map { get; set; }
     }
 
     public class ScoreData
