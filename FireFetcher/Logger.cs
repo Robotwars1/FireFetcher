@@ -20,8 +20,10 @@ namespace FireFetcher
 
             CheckLogFolder();
 
+            string FilePath = Path.Combine(LogFolder, "General-Log.txt");
+
             // Write to log
-            using StreamWriter OutputFile = new(Path.Combine(LogFolder, "General-Log.txt"));
+            using StreamWriter OutputFile = File.AppendText(FilePath);
             OutputFile.WriteLine(Text);
             OutputFile.Close();
         }
@@ -30,8 +32,10 @@ namespace FireFetcher
         {
             CheckLogFolder();
 
+            string FilePath = Path.Combine(LogFolder, "Json-Log.txt");
+
             // Write to log
-            using StreamWriter OutputFile = new(Path.Combine(LogFolder, "Json-Log.txt"));
+            using StreamWriter OutputFile = System.IO.File.AppendText(FilePath);
             OutputFile.WriteLine($"[{DateTime.Now}] Wrote the following data to {File}:\n{Data}");
             OutputFile.Close();
         }
@@ -43,8 +47,10 @@ namespace FireFetcher
 
             CheckLogFolder();
 
+            string FilePath = Path.Combine(LogFolder, "Command-Log.txt");
+
             // Write to log
-            using StreamWriter OutputFile = new(Path.Combine(LogFolder, "Command-Log.txt"));
+            using StreamWriter OutputFile = File.AppendText(FilePath);
             OutputFile.WriteLine($"[{DateTime.Now}] {User} used the command {CommandName}");
             OutputFile.Close();
         }
