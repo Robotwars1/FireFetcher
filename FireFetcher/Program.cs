@@ -186,6 +186,10 @@ public class Program
 
     public async Task Client_Ready()
     {
+        var PingCommand = new SlashCommandBuilder()
+            .WithName("ping")
+            .WithDescription("Get bot latency");
+
         // Command for setting which server channel to send leaderboard in
         var SetChannelCommand = new SlashCommandBuilder()
             .WithName("set-channel")
@@ -214,6 +218,7 @@ public class Program
         try
         {
             // Create each slash command
+            await Client.CreateGlobalApplicationCommandAsync(PingCommand.Build());
             await Client.CreateGlobalApplicationCommandAsync(SetChannelCommand.Build());
             await Client.CreateGlobalApplicationCommandAsync(AddUserCommand.Build());
             await Client.CreateGlobalApplicationCommandAsync(RemoveUserCommand.Build());
@@ -249,6 +254,9 @@ public class Program
 
         switch (command.Data.Name)
         {
+            case "ping":
+                await HandlePingCommand(command);
+                break;
             case "set-channel":
                 await HandleSetChannelCommand(command);
                 break;
@@ -262,6 +270,11 @@ public class Program
                 await HandleUpdateLeaderboardCommand(command);
                 break;
         }
+    }
+
+    private async Task HandlePingCommand(SocketSlashCommand command)
+    {
+        await command.RespondAsync("Yes I'm alive, now bugger off");
     }
 
     private async Task HandleSetChannelCommand(SocketSlashCommand command)
