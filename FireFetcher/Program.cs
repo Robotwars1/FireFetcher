@@ -510,9 +510,12 @@ public class Program
             TextBuilder.BuildText(Mel, true, false));
 
         embed.AddField("SP CM Best Place",
-            TextBuilder.BuildText(Cm, true, true))
+            TextBuilder.BuildText(Cm, true, true));
+
+        embed.AddField("\u200B",
+            $"Last updated {new TimestampTag(DateTimeOffset.UtcNow, TimestampTagStyles.Relative)}")
             // Add the footer to the last field
-            .WithFooter(footer => footer.Text = "To get added to the leaderboards, do /add-user");
+            .WithFooter(footer => footer.Text = $"To get added to the leaderboards, do /add-user");
 
         // If leaderboard doesnt exist, send it
         if (LeaderboardMessageId == 0)
