@@ -6,61 +6,39 @@ namespace FireFetcher
     {
         public string Clean(string DirtyTime)
         {
-            // First we go through the DirtyTime to make sure minutes and seconds always have 2 digits
+            // Dirtytime is represented in the format PTxxHxxMxx.xxxS
+            // Hours, Minutes and Miliseconds can also be missing
+
             StringBuilder StringBuild = new();
 
-            string Hour = "";
-            string Minute = "";
-            string Second = "";
-            string MiliSecond = "";
-
+            // First we go through the DirtyTime to make sure minutes and seconds always have 2 digits
+            int ChunkCharIndex = 0;
             int CharIndex = 0;
 
             foreach (char Char in DirtyTime)
             {
-                StringBuild.Append(Char);
+                if (Char == 'H' || Char == 'M' || Char == '.' || Char == 'S')
+                {
+                    // If there is only one 0 in Minute or Second
+                    if (ChunkCharIndex == 1 && Char != 'H' && Char != 'S')
+                    {
+                        StringBuild.Insert(CharIndex - 1, '0');
+                        CharIndex++;
+                    }
 
-                if (StringBuild.ToString().EndsWith("H"))
-                {
-                    Hour = StringBuild.ToString();
-                    StringBuild = new();
+                    ChunkCharIndex = 0;
                 }
-                else if (StringBuild.ToString().EndsWith("M"))
+                else
                 {
-                    Minute = StringBuild.ToString();
-                    StringBuild = new();
+                    ChunkCharIndex++;
                 }
-                // Extra check incase there are no MiliSeconds
-                else if (StringBuild.ToString().EndsWith(".") || CharIndex == DirtyTime.Length)
-                {
-                    Second = StringBuild.ToString();
-                    StringBuild = new();
-                }
-                else if (StringBuild.ToString().EndsWith("S"))
-                {
-                    MiliSecond = StringBuild.ToString();
-                    StringBuild = new();
-                }
+
+                StringBuild.Append(Char);
 
                 CharIndex++;
             }
 
-            // Check if Minute and Second are missing a 0 in front (basicly if they are less than 10
-            if (Minute.Length == 2)
-            {
-                Minute = Minute.Insert(0, "0");
-            }
-            if (Second.Length == 2)
-            {
-                Second = Second.Insert(0, "0");
-            }
-
-            DirtyTime = "" + Hour + Minute + Second + MiliSecond;
-
-            // Clean the time
-            string CleanTime = DirtyTime.Replace("PT", "").Replace("H", ":").Replace("M", ":").Replace("S", "");
-
-            return CleanTime;
+            return StringBuild.ToString().Replace("PT", "").Replace("H", ":").Replace("M", ":").Replace("S", "");
         }
     }
 }

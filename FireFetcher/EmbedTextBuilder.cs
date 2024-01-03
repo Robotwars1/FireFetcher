@@ -126,9 +126,10 @@ namespace FireFetcher
             }
         }
 
-        private string ConvertPlace(int Place)
+        private static string ConvertPlace(int Place)
         {
             // Modulo 10 since we want end digit
+            // 11th, 12th, 13th are expetions from "standard"
             if (Place % 10 == 1 && Place != 11)
             {
                 return $"{Place}st";

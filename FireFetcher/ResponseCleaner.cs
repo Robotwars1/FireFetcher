@@ -53,9 +53,6 @@ namespace FireFetcher
                 }
             }
 
-            // Remove duplicate entries
-            //IndexToRemove = IndexToRemove.Distinct().ToList();
-
             // Removing by going through List backwards to avoid errors
             IndexToRemove = IndexToRemove.OrderByDescending(o => o).ToList();
             foreach (int Index in IndexToRemove)

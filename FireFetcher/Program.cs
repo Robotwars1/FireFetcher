@@ -15,9 +15,7 @@ public class Program
     private DiscordSocketClient Client;
 
     IMessageChannel Channel;
-
     ulong LeaderboardMessageId;
-
     Dictionary<string, string> Users = new();
 
     // Paths to each .json file
@@ -271,10 +269,8 @@ public class Program
         Channel = command.Data.Options.First().Value as IMessageChannel;
 
         // Write the new ChannelId to Channel.json
-        FileStream MessageJsonFile = File.Create(ChannelFilePath);
-        var Utf8JsonWriter = new Utf8JsonWriter(MessageJsonFile);
-        System.Text.Json.JsonSerializer.Serialize(Utf8JsonWriter, Channel.Id, _writeOptions);
-        MessageJsonFile.Close();
+        JsonInterface JsonInterface = new();
+        JsonInterface.WriteToJson(Channel.Id, ChannelFilePath);
 
         Logger Logger = new();
         Logger.JsonLog(Channel.Id.ToString(), ChannelFilePath);
@@ -283,10 +279,7 @@ public class Program
         LeaderboardMessageId = 0;
 
         // Write the new messageid to Message.json
-        FileStream JsonFile = File.Create(MessageFilePath);
-        Utf8JsonWriter = new Utf8JsonWriter(JsonFile);
-        System.Text.Json.JsonSerializer.Serialize(Utf8JsonWriter, LeaderboardMessageId, _writeOptions);
-        JsonFile.Close();
+        JsonInterface.WriteToJson(LeaderboardMessageId, MessageFilePath);
 
         Logger.JsonLog(LeaderboardMessageId.ToString(), MessageFilePath);
 
@@ -299,10 +292,8 @@ public class Program
         Users.Add(command.Data.Options.First().Value.ToString(), command.Data.Options.ElementAt(1).Value.ToString());
 
         // Write to Users file
-        FileStream JsonFile = File.Create(UsersFilePath);
-        var Utf8JsonWriter = new Utf8JsonWriter(JsonFile);
-        System.Text.Json.JsonSerializer.Serialize(Utf8JsonWriter, Users, _writeOptions);
-        JsonFile.Close();
+        JsonInterface JsonInterface = new();
+        JsonInterface.WriteToJson(Users, UsersFilePath);
 
         Logger Logger = new();
         Logger.JsonLog(Users.ToString(), UsersFilePath);
@@ -318,10 +309,8 @@ public class Program
         Users.Remove(command.Data.Options.First().Value.ToString());
 
         // Write to Users file
-        FileStream JsonFile = File.Create(UsersFilePath);
-        var Utf8JsonWriter = new Utf8JsonWriter(JsonFile);
-        System.Text.Json.JsonSerializer.Serialize(Utf8JsonWriter, Users, _writeOptions);
-        JsonFile.Close();
+        JsonInterface JsonInterface = new();
+        JsonInterface.WriteToJson(Users, UsersFilePath);
 
         Logger Logger = new();
         Logger.JsonLog(Users.ToString(), UsersFilePath);
@@ -342,11 +331,6 @@ public class Program
     {
         List<SrcResponse> JsonData = new();
         List<BoardsResponse> RawBoardsData = new();
-
-        // Get users
-        FileStream JsonFile = File.OpenRead(UsersFilePath);
-        Users = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(JsonFile, _readOptions);
-        JsonFile.Close();
 
         foreach (string User in Users.Keys)
         {
@@ -442,7 +426,7 @@ public class Program
                             var json = await response.Content.ReadAsStringAsync();
 
                             SrcProfileResponse ProfileData = System.Text.Json.JsonSerializer.Deserialize<SrcProfileResponse>(json, _readOptions);
-                            
+
                             // Check that we grabbed the other player
                             if (ProfileData.data.names.international != Users.ElementAt(i).Key)
                             {
@@ -538,10 +522,8 @@ public class Program
             LeaderboardMessageId = LeaderboardMessage.Id;
 
             // Write the new messageid to Message.json
-            FileStream MessageJsonFile = File.Create(MessageFilePath);
-            var Utf8JsonWriter = new Utf8JsonWriter(MessageJsonFile);
-            System.Text.Json.JsonSerializer.Serialize(Utf8JsonWriter, LeaderboardMessageId, _writeOptions);
-            MessageJsonFile.Close();
+            JsonInterface JsonInterface = new();
+            JsonInterface.WriteToJson(LeaderboardMessageId, MessageFilePath);
 
             Logger Logger = new();
             Logger.JsonLog(LeaderboardMessageId.ToString(), MessageFilePath);
