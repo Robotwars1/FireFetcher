@@ -287,7 +287,11 @@ public class Program
 
     private async Task HandlePingCommand(SocketSlashCommand command)
     {
-        await command.RespondAsync("Yes I'm alive, now bugger off");
+        var embed = new EmbedBuilder();
+
+        embed.AddField("Yes I'm alive, now bugger off", "Latency: How should I know???");
+
+        await command.RespondAsync(embed: embed.Build());
     }
 
     private async Task HandleSetChannelCommand(SocketSlashCommand command)
