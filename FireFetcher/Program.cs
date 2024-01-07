@@ -119,6 +119,17 @@ public class Program
         public string playerRank { get; set; }
     }
 
+    public class LpResponse
+    {
+        public List<LpData> data { get; set; }
+    }
+
+    public class LpData
+    {
+        public string name { get; set; }
+        public int score { get; set; }
+    }
+
     // Classes for cleaned data
     public class CleanedResponse
     {
@@ -127,6 +138,7 @@ public class Program
         public int Place { get; set; }
         public string Time { get; set; }
         public string Map { get; set; }
+        public int PortalCount { get; set; }
     }
 
     public async Task MainAsync()
@@ -345,6 +357,7 @@ public class Program
         List<SrcResponse> JsonData = new();
         List<BoardsResponse> RawBoardsData = new();
 
+        // Itterate through speedrun.com usernames
         foreach (string User in Users.Keys)
         {
             // Get speedrun.com pbs
@@ -371,6 +384,7 @@ public class Program
             }
         }
 
+        // Itterate through steam usernames
         foreach (string User in Users.Values)
         {
             // Get board.portal2.sr pbs
@@ -396,6 +410,23 @@ public class Program
             }
         }
 
+        // Get lp.nekz.me pbs
+        var LpClient = new HttpClient();
+
+        string LpUrl = "https://lp.nekz.me/api/v1/sp";
+
+        var LpResponse = await LpClient.GetAsync(LpUrl);
+
+        LpResponse RawLpResponse = new();
+
+        if (LpResponse.IsSuccessStatusCode)
+        {
+            var json = await LpResponse.Content.ReadAsStringAsync();
+
+            // Parse the contents as a .json
+            RawLpResponse = System.Text.Json.JsonSerializer.Deserialize<LpResponse>(json, _readOptions);
+        }
+
         // Clean data to only keep the specific pbs we want to show
         List<CleanedResponse> NoSLA = new();
         List<CleanedResponse> Amc = new();
@@ -403,6 +434,8 @@ public class Program
         List<CleanedResponse> Mel = new();
 
         List<CleanedResponse> Cm = new();
+
+        List<CleanedResponse> SpLp = new();
 
         TimeCleaner TimeClean = new();
 
@@ -484,6 +517,18 @@ public class Program
             }
         }
 
+        // Clean and parse LP scores
+        for (int i = 0; i < RawLpResponse.data.Count; i++)
+        {
+            foreach (string User in Users.Values)
+            {
+                if (RawLpResponse.data[i].name == User)
+                {
+                    SpLp.Add(new CleanedResponse() { Runner = User, PortalCount = RawLpResponse.data[i].score }); 
+                }
+            }
+        }
+
         // Sort pbs to find out who is first in each cat
         NoSLA = NoSLA.OrderBy(o => o.Place).ToList();
         Amc = Amc.OrderBy(o => o.Place).ToList();
@@ -491,6 +536,8 @@ public class Program
         Mel = Mel.OrderBy(o => o.Place).ToList();
 
         Cm = Cm.OrderBy(o => o.Place).ToList();
+
+        SpLp = SpLp.OrderBy(o => o.PortalCount).ToList();
 
         // Clean all lists
         ResponseCleaner Cleaner = new();
@@ -511,19 +558,22 @@ public class Program
         EmbedTextBuilder TextBuilder = new();
 
         embed.AddField("NoSLA",
-            TextBuilder.BuildText(NoSLA, true, false));
+            TextBuilder.BuildText(NoSLA, true, false, false));
 
         embed.AddField("Amc",
-            TextBuilder.BuildText(Amc, false, false));
+            TextBuilder.BuildText(Amc, false, false, false));
 
         embed.AddField("Speedrun Mod",
-            TextBuilder.BuildText(Srm, true, false));
+            TextBuilder.BuildText(Srm, true, false, false));
 
         embed.AddField("Portal Stories: Mel",
-            TextBuilder.BuildText(Mel, true, false));
+            TextBuilder.BuildText(Mel, true, false, false));
 
         embed.AddField("SP CM Best Place",
-            TextBuilder.BuildText(Cm, true, true));
+            TextBuilder.BuildText(Cm, true, true, false));
+
+        embed.AddField("SP Least Portals",
+            TextBuilder.BuildText(SpLp, true, false, true));
 
         embed.AddField("\u200B",
             $"Last updated {new TimestampTag(DateTimeOffset.UtcNow, TimestampTagStyles.Relative)}")

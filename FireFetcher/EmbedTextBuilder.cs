@@ -4,7 +4,7 @@ namespace FireFetcher
 {
     internal class EmbedTextBuilder
     {
-        public string BuildText(List<Program.CleanedResponse> List, bool Singleplayer, bool Cm)
+        public string BuildText(List<Program.CleanedResponse> List, bool Singleplayer, bool Cm, bool LP)
         {
             if (Singleplayer)
             {
@@ -44,6 +44,58 @@ namespace FireFetcher
                                     break;
                                 case > 2:
                                     Sb.Append($"\n{Position + 1}th - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
+                                    break;
+                            }
+
+                            LastPlace = List[i].Place;
+                        }
+
+                        // Return the newly created leaderboards text
+                        return Sb.ToString();
+                    }
+                }
+                else if (LP)
+                {
+                    // If empty list
+                    if (List.Count == 0)
+                    {
+                        return "No runs available";
+                    }
+                    // Else, meaning list has content
+                    else
+                    {
+                        // Set place for each
+                        for (int i = 0; i < List.Count; i++)
+                        {
+                            List[i].Place = i + 1;
+                        }
+
+                        int LastPlace = 0;
+                        int Offset = 0;
+
+                        StringBuilder Sb = new("");
+                        for (int i = 0; i < List.Count; i++)
+                        {
+                            if (List[i].Place == LastPlace)
+                            {
+                                Offset++;
+                            }
+
+                            int Position = i - Offset;
+
+                            switch (Position)
+                            {
+                                case 0:
+                                    Sb.Append($"1st - {List[Position + Offset].Runner} - {List[Position + Offset].PortalCount} Portals");
+                                    break;
+                                case 1:
+                                    Sb.Append($"\n2nd - {List[Position + Offset].Runner} - {List[Position + Offset].PortalCount} Portals");
+                                    break;
+                                case 2:
+                                    Sb.Append($"\n3rd - {List[Position + Offset].Runner} - {List[Position + Offset].PortalCount} Portals");
+                                    break;
+                                case > 2:
+                                    Sb.Append($"\n{Position + 1}th - {List[Position + Offset].Runner} - {List[Position + Offset].PortalCount} Portals");
                                     break;
                             }
 
