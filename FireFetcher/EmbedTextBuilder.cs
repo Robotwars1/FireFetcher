@@ -6,176 +6,127 @@ namespace FireFetcher
     {
         public string BuildText(List<Program.CleanedResponse> List, bool Singleplayer, bool Cm, bool LP)
         {
+            // If empty list
+            if (List.Count == 0)
+            {
+                return "No runs available";
+            }
+
+            int LastPlace = 0;
+            int Offset = 0;
+
+            StringBuilder Sb = new("");
+
             if (Singleplayer)
             {
                 if (Cm)
                 {
-                    // If empty list
-                    if (List.Count == 0)
+                    for (int i = 0; i < List.Count; i++)
                     {
-                        return "No runs available";
-                    }
-                    // Else, meaning list has content
-                    else
-                    {
-                        int LastPlace = 0;
-                        int Offset = 0;
-
-                        StringBuilder Sb = new("");
-                        for (int i = 0; i < List.Count; i++)
+                        if (List[i].Place == LastPlace)
                         {
-                            if (List[i].Place == LastPlace)
-                            {
-                                Offset++;
-                            }
-
-                            int Position = i - Offset;
-
-                            switch (Position)
-                            {
-                                case 0:
-                                    Sb.Append($"1st - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
-                                    break;
-                                case 1:
-                                    Sb.Append($"\n2nd - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
-                                    break;
-                                case 2:
-                                    Sb.Append($"\n3rd - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
-                                    break;
-                                case > 2:
-                                    Sb.Append($"\n{Position + 1}th - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
-                                    break;
-                            }
-
-                            LastPlace = List[i].Place;
+                            Offset++;
                         }
 
-                        // Return the newly created leaderboards text
-                        return Sb.ToString();
+                        int Position = i - Offset;
+
+                        switch (Position)
+                        {
+                            case 0:
+                                Sb.Append($"1st - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
+                                break;
+                            case 1:
+                                Sb.Append($"\n2nd - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
+                                break;
+                            case 2:
+                                Sb.Append($"\n3rd - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
+                                break;
+                            case > 2:
+                                Sb.Append($"\n{Position + 1}th - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
+                                break;
+                        }
+
+                        LastPlace = List[i].Place;
                     }
                 }
                 else if (LP)
                 {
-                    // If empty list
-                    if (List.Count == 0)
+                    for (int i = 0; i < List.Count; i++)
                     {
-                        return "No runs available";
-                    }
-                    // Else, meaning list has content
-                    else
-                    {
-                        // Set place for each
-                        for (int i = 0; i < List.Count; i++)
+                        if (List[i].Place == LastPlace)
                         {
-                            List[i].Place = i + 1;
+                            Offset++;
                         }
 
-                        int LastPlace = 0;
-                        int Offset = 0;
+                        int Position = i - Offset;
 
-                        StringBuilder Sb = new("");
-                        for (int i = 0; i < List.Count; i++)
+                        switch (Position)
                         {
-                            if (List[i].Place == LastPlace)
-                            {
-                                Offset++;
-                            }
-
-                            int Position = i - Offset;
-
-                            switch (Position)
-                            {
-                                case 0:
-                                    Sb.Append($"1st - {List[Position + Offset].Runner} - {List[Position + Offset].PortalCount} Portals");
-                                    break;
-                                case 1:
-                                    Sb.Append($"\n2nd - {List[Position + Offset].Runner} - {List[Position + Offset].PortalCount} Portals");
-                                    break;
-                                case 2:
-                                    Sb.Append($"\n3rd - {List[Position + Offset].Runner} - {List[Position + Offset].PortalCount} Portals");
-                                    break;
-                                case > 2:
-                                    Sb.Append($"\n{Position + 1}th - {List[Position + Offset].Runner} - {List[Position + Offset].PortalCount} Portals");
-                                    break;
-                            }
-
-                            LastPlace = List[i].Place;
+                            case 0:
+                                Sb.Append($"1st - {List[Position + Offset].Runner} - {List[Position + Offset].PortalCount} Portals");
+                                break;
+                            case 1:
+                                Sb.Append($"\n2nd - {List[Position + Offset].Runner} - {List[Position + Offset].PortalCount} Portals");
+                                break;
+                            case 2:
+                                Sb.Append($"\n3rd - {List[Position + Offset].Runner} - {List[Position + Offset].PortalCount} Portals");
+                                break;
+                            case > 2:
+                                Sb.Append($"\n{Position + 1}th - {List[Position + Offset].Runner} - {List[Position + Offset].PortalCount} Portals");
+                                break;
                         }
 
-                        // Return the newly created leaderboards text
-                        return Sb.ToString();
+                        LastPlace = List[i].Place;
                     }
                 }
+                // If a fullgame run
                 else
                 {
-                    // If empty list
-                    if (List.Count == 0)
+                    for (int i = 0; i < List.Count; i++)
                     {
-                        return "No runs available";
-                    }
-                    // Else, meaning list has content
-                    else
-                    {
-                        StringBuilder Sb = new("");
-                        for (int i = 0; i < List.Count; i++)
+                        switch (i)
                         {
-                            switch (i)
-                            {
-                                case 0:
-                                    Sb.Append($"1st - {List[i].Runner} - {List[i].Time}");
-                                    break;
-                                case 1:
-                                    Sb.Append($"\n2nd - {List[i].Runner} - {List[i].Time}");
-                                    break;
-                                case 2:
-                                    Sb.Append($"\n3rd - {List[i].Runner} - {List[i].Time}");
-                                    break;
-                                case > 2:
-                                    Sb.Append($"\n{i + 1}th - {List[i].Runner} - {List[i].Time}");
-                                    break;
-                            }
+                            case 0:
+                                Sb.Append($"1st - {List[i].Runner} - {List[i].Time}");
+                                break;
+                            case 1:
+                                Sb.Append($"\n2nd - {List[i].Runner} - {List[i].Time}");
+                                break;
+                            case 2:
+                                Sb.Append($"\n3rd - {List[i].Runner} - {List[i].Time}");
+                                break;
+                            case > 2:
+                                Sb.Append($"\n{i + 1}th - {List[i].Runner} - {List[i].Time}");
+                                break;
                         }
-
-                        // Return the newly created leaderboards text
-                        return Sb.ToString();
                     }
                 }
             }
             // If Coop
             else
             {
-                // If empty list
-                if (List.Count == 0)
+                for (int i = 0; i < List.Count; i++)
                 {
-                    return "No runs available";
-                }
-                // Else, meaning list has content
-                else
-                {
-                    StringBuilder Sb = new("");
-                    for (int i = 0; i < List.Count; i++)
+                    switch (i)
                     {
-                        switch (i)
-                        {
-                            case 0:
-                                Sb.Append($"1st - {List[i].Runner} & {List[i].Partner} - {List[i].Time}");
-                                break;
-                            case 1:
-                                Sb.Append($"\n2nd - {List[i].Runner} & {List[i].Partner} - {List[i].Time}");
-                                break;
-                            case 2:
-                                Sb.Append($"\n3rd - {List[i].Runner} & {List[i].Partner} - {List[i].Time}");
-                                break;
-                            case > 2:
-                                Sb.Append($"\n{i + 1}th - {List[i].Runner} & {List[i].Partner} - {List[i].Time}");
-                                break;
-                        }
+                        case 0:
+                            Sb.Append($"1st - {List[i].Runner} & {List[i].Partner} - {List[i].Time}");
+                            break;
+                        case 1:
+                            Sb.Append($"\n2nd - {List[i].Runner} & {List[i].Partner} - {List[i].Time}");
+                            break;
+                        case 2:
+                            Sb.Append($"\n3rd - {List[i].Runner} & {List[i].Partner} - {List[i].Time}");
+                            break;
+                        case > 2:
+                            Sb.Append($"\n{i + 1}th - {List[i].Runner} & {List[i].Partner} - {List[i].Time}");
+                            break;
                     }
-
-                    // Return the newly created leaderboards text
-                    return Sb.ToString();
                 }
             }
+
+            // Return the newly created leaderboards text
+            return Sb.ToString();
         }
 
         private static string ConvertPlace(int Place)

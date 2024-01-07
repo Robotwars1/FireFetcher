@@ -128,6 +128,7 @@ public class Program
     {
         public string name { get; set; }
         public int score { get; set; }
+        public int rank { get; set; }
     }
 
     // Classes for cleaned data
@@ -524,7 +525,7 @@ public class Program
             {
                 if (RawLpResponse.data[i].name == User)
                 {
-                    SpLp.Add(new CleanedResponse() { Runner = User, PortalCount = RawLpResponse.data[i].score }); 
+                    SpLp.Add(new CleanedResponse() { Runner = User, PortalCount = RawLpResponse.data[i].score, Place = RawLpResponse.data[i].rank }); 
                 }
             }
         }
