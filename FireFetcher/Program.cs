@@ -223,6 +223,10 @@ public class Program
             .AddOption("src-username", ApplicationCommandOptionType.String, "Speedrun.com username", isRequired: true)
             .AddOption("cm-board-username", ApplicationCommandOptionType.String, "board.portal2.sr username", isRequired: true);
 
+        var ListUsersCommand = new SlashCommandBuilder()
+            .WithName("list-users")
+            .WithDescription("Lists each added user");
+
         // Command for updating leaderboard
         var UpdateLeaderboardCommand = new SlashCommandBuilder()
             .WithName("update-leaderboard")
@@ -235,6 +239,7 @@ public class Program
             await Client.CreateGlobalApplicationCommandAsync(SetChannelCommand.Build());
             await Client.CreateGlobalApplicationCommandAsync(AddUserCommand.Build());
             await Client.CreateGlobalApplicationCommandAsync(RemoveUserCommand.Build());
+            await Client.CreateGlobalApplicationCommandAsync(ListUsersCommand.Build());
             await Client.CreateGlobalApplicationCommandAsync(UpdateLeaderboardCommand.Build());
         }
         catch (HttpException exception)
@@ -278,6 +283,9 @@ public class Program
                 break;
             case "remove-user":
                 await HandleRemoveUserCommand(command);
+                break;
+            case "list-users":
+                await HandleListUsersCommand(command);
                 break;
             case "update-leaderboard":
                 await HandleUpdateLeaderboardCommand(command);
@@ -348,6 +356,49 @@ public class Program
         await command.RespondAsync($"Removed user {command.Data.Options.First().Value} from leaderboard", ephemeral: true);
 
         await GetPersonalBests();
+    }
+
+    private async Task HandleListUsersCommand(SocketSlashCommand command)
+    {
+        string Text = "";
+        for (int i = 0; i < Users.Count; i++)
+        {
+            if (i == 0)
+            {
+                // If src and steam username are the same only write out once
+                if (Users.ElementAt(i).Key == Users.ElementAt(i).Value)
+                {
+                    Text = $"{Users.ElementAt(i).Key}";
+                }
+                else
+                {
+                    Text = $"{Users.ElementAt(i).Key} | {Users.ElementAt(i).Value}";
+                }
+            }
+            else
+            {
+                // If src and steam username are the same only write out once
+                if (Users.ElementAt(i).Key == Users.ElementAt(i).Value)
+                {
+                    Text += $"\n{Users.ElementAt(i).Key}";
+                }
+                else
+                {
+                    Text += $"\n{Users.ElementAt(i).Key} | {Users.ElementAt(i).Value}";
+                }
+            }
+        }
+
+        if (Users.Count == 0)
+        {
+            Text = "No users are added";
+        }
+
+        var Embed = new EmbedBuilder();
+        Embed.AddField("Users on leaderbaords", Text)
+            .WithFooter("Usernames follow the structure:\n[speedrun.com] | [steam]\nIf only one name shows, they are the same");
+
+        await command.RespondAsync(embed: Embed.Build());
     }
 
     private async Task HandleUpdateLeaderboardCommand(SocketSlashCommand command)
