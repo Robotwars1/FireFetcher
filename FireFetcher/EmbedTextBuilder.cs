@@ -33,7 +33,15 @@ namespace FireFetcher
                         switch (Position)
                         {
                             case 0:
-                                Sb.Append($"1st - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
+                                if (i == 0)
+                                {
+                                    Sb.Append($"1st - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
+                                }
+                                // If there is a tie at 1st
+                                else
+                                {
+                                    Sb.Append($"\n1st - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
+                                }
                                 break;
                             case 1:
                                 Sb.Append($"\n2nd - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
@@ -63,7 +71,15 @@ namespace FireFetcher
                         switch (Position)
                         {
                             case 0:
-                                Sb.Append($"1st - {List[Position + Offset].Runner} - {List[Position + Offset].PortalCount} Portals");
+                                if (i == 0)
+                                {
+                                    Sb.Append($"1st - {List[Position + Offset].Runner} - {List[Position + Offset].PortalCount} Portals");
+                                }
+                                // If there is a tie at 1st
+                                else
+                                {
+                                    Sb.Append($"\n1st - {List[Position + Offset].Runner} - {List[Position + Offset].PortalCount} Portals");
+                                }
                                 break;
                             case 1:
                                 Sb.Append($"\n2nd - {List[Position + Offset].Runner} - {List[Position + Offset].PortalCount} Portals");
@@ -87,7 +103,15 @@ namespace FireFetcher
                         switch (i)
                         {
                             case 0:
-                                Sb.Append($"1st - {List[i].Runner} - {List[i].Time}");
+                                if (i == 0)
+                                {
+                                    Sb.Append($"1st - {List[i].Runner} - {List[i].Time}");
+                                }
+                                // If there is a tie at 1st
+                                else
+                                {
+                                    Sb.Append($"\n1st - {List[i].Runner} - {List[i].Time}");
+                                }
                                 break;
                             case 1:
                                 Sb.Append($"\n2nd - {List[i].Runner} - {List[i].Time}");
@@ -110,7 +134,15 @@ namespace FireFetcher
                     switch (i)
                     {
                         case 0:
-                            Sb.Append($"1st - {List[i].Runner} & {List[i].Partner} - {List[i].Time}");
+                            if (i == 0)
+                            {
+                                Sb.Append($"1st - {List[i].Runner} & {List[i].Partner} - {List[i].Time}");
+                            }
+                            // If there is a tie at 1st
+                            else
+                            {
+                                Sb.Append($"\n1st - {List[i].Runner} & {List[i].Partner} - {List[i].Time}");
+                            }
                             break;
                         case 1:
                             Sb.Append($"\n2nd - {List[i].Runner} & {List[i].Partner} - {List[i].Time}");
