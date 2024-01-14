@@ -597,12 +597,13 @@ public class Program
 
         // Clean all lists
         ResponseCleaner Cleaner = new();
-        Cleaner.RemoveDuplicate(Amc);
-
         Cleaner.GetBestRunFromEachUser(NoSLA);
         Cleaner.GetBestRunFromEachUser(Amc);
         Cleaner.GetBestRunFromEachUser(Srm);
         Cleaner.GetBestRunFromEachUser(Mel);
+
+        // Remove duplicates last as to not accidentaly remove faster runs (See issue #17)
+        Cleaner.RemoveDuplicate(Amc);
 
         // Build the enbeded message
         var embed = new EmbedBuilder
