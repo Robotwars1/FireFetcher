@@ -3,7 +3,7 @@ namespace FireFetcher
 {
     internal class CmMapParser
     {
-        private readonly Dictionary<string, string> MapDictionary = new()
+        private static readonly Dictionary<string, string> MapDictionary = new()
         {
             { "Container Ride",   "62761" },
             { "Portal Carousel",  "62758" },
@@ -24,15 +24,15 @@ namespace FireFetcher
             { "Pit Flings",      "47465" },
             { "Fizzler Intro",   "47746" },
 
-            { "Ceiling Catapult",      "47748" },
-            { "Ricochet",              "47751" },
-            { "Bridge Intro",          "47752" },
-            { "Bridge the Gap",        "47755" },
-            { "Turret Intro",          "47756" },
-            { "Laser Relays",          "47759" },
-            { "Turret Blocker",        "47760" },
-            { "Laser vs Turret",       "47763" },
-            { "Pull the Rug",          "47764" },
+            { "Ceiling Catapult",  "47748" },
+            { "Ricochet",          "47751" },
+            { "Bridge Intro",      "47752" },
+            { "Bridge the Gap",    "47755" },
+            { "Turret Intro",      "47756" },
+            { "Laser Relays",      "47759" },
+            { "Turret Blocker",    "47760" },
+            { "Laser vs Turret",   "47763" },
+            { "Pull the Rug",      "47764" },
 
             { "Column Blocker",    "47766" },
             { "Laser Chaining",    "47768" },

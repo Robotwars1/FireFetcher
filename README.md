@@ -20,3 +20,14 @@ The leaderboards part of the bot is an automatic way to fetch users pbs from spe
 4. Clean duplicate runs and only save best run from each player
 5. Build the embed
 6. Post / edit message
+
+# Architecture
+### CategoryIndexes
+| Index | Category   |
+| ------| :--------: |
+| 0     | NoSLA      |
+| 1     | Amc        |
+| 2     | Srm        |
+| 3     | PS: Mel    |
+| 4     | SP CM      |
+| 5     | SP LP      |

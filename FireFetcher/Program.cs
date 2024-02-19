@@ -12,10 +12,12 @@ public class Program
 {
     public static Task Main(string[] args) => new Program().MainAsync();
 
+    private readonly JsonInterface JsonInterface = new();
+
     private DiscordSocketClient Client;
 
     IMessageChannel Channel;
-    ulong LeaderboardMessageId;
+    ulong? LeaderboardMessageId;
     Dictionary<string, string> Users = new();
 
     // Paths to each .json file
@@ -28,10 +30,7 @@ public class Program
         PropertyNameCaseInsensitive = true
     };
 
-    private static readonly JsonSerializerOptions _writeOptions = new()
-    {
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-    };
+    #region Data Fetching Classes
 
     public class SrcResponse
     {
@@ -142,6 +141,8 @@ public class Program
         public int PortalCount { get; set; }
     }
 
+    #endregion
+
     public async Task MainAsync()
     {
         Client = new DiscordSocketClient();
@@ -153,29 +154,9 @@ public class Program
         // DO NOT MAKE TOKEN PUBLIC
         var token = File.ReadAllText("Token.txt");
 
-        // Read current Users list
-        FileStream JsonFile = File.OpenRead(UsersFilePath);
-        try
-        {
-            Users = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(JsonFile, _readOptions);
-        }
-        catch
-        {
-            Console.WriteLine("Failed to get users from Users.json");
-        }
-        JsonFile.Close();
-
-        // Read message id
-        JsonFile = File.OpenRead(MessageFilePath);
-        try
-        {
-            LeaderboardMessageId = System.Text.Json.JsonSerializer.Deserialize<ulong>(JsonFile, _readOptions);
-        }
-        catch
-        {
-            Console.WriteLine("Failed to get id from Message.json");
-        }
-        JsonFile.Close();
+        // Read saved data
+        Users = (Dictionary<string, string>)JsonInterface.ReadJson(UsersFilePath, "Users");
+        LeaderboardMessageId = (ulong?)JsonInterface.ReadJson(MessageFilePath, "ID");
 
         // Start bot
         await Client.LoginAsync(TokenType.Bot, token);
@@ -251,67 +232,60 @@ public class Program
             Console.WriteLine(json);
         }
 
-        // Read channel id
         // Gets channel id later than everything else cause it doesnt work otherwise ¯\_(ツ)_/¯
-        FileStream JsonFile = File.OpenRead(ChannelFilePath);
-        try
+        ulong? ChannelId = (ulong?)JsonInterface.ReadJson(ChannelFilePath, "ID");
+        if (ChannelId != null)
         {
-            Channel = Client.GetChannel(System.Text.Json.JsonSerializer.Deserialize<ulong>(JsonFile, _readOptions)) as IMessageChannel;
+            Channel = Client.GetChannel((ulong)ChannelId) as IMessageChannel;
         }
-        catch
-        {
-            Console.WriteLine("Failed to get channel from Channel.json");
-        }
-        JsonFile.Close();
     }
 
-    private async Task SlashCommandHandler(SocketSlashCommand command)
+    private async Task SlashCommandHandler(SocketSlashCommand Command)
     {
         Logger Logger = new();
-        Logger.CommandLog(command.Data.Name, command.User.ToString());
+        Logger.CommandLog(Command.Data.Name, Command.User.ToString());
 
-        switch (command.Data.Name)
+        switch (Command.Data.Name)
         {
             case "ping":
-                await HandlePingCommand(command);
+                await HandlePingCommand(Command);
                 break;
             case "set-channel":
-                await HandleSetChannelCommand(command);
+                await HandleSetChannelCommand(Command);
                 break;
             case "add-user":
-                await HandleAddUserCommand(command);
+                await HandleAddUserCommand(Command);
                 break;
             case "remove-user":
-                await HandleRemoveUserCommand(command);
+                await HandleRemoveUserCommand(Command);
                 break;
             case "list-users":
-                await HandleListUsersCommand(command);
+                await HandleListUsersCommand(Command);
                 break;
             case "update-leaderboard":
-                await HandleUpdateLeaderboardCommand(command);
+                await HandleUpdateLeaderboardCommand(Command);
                 break;
         }
     }
 
-    private async Task HandlePingCommand(SocketSlashCommand command)
+    #region Commands
+
+    private async Task HandlePingCommand(SocketSlashCommand Command)
     {
         var embed = new EmbedBuilder();
 
         embed.AddField("Yes I'm alive, now bugger off", "Latency: How should I know???");
 
-        await command.RespondAsync(embed: embed.Build());
+        await Command.RespondAsync(embed: embed.Build());
     }
 
-    private async Task HandleSetChannelCommand(SocketSlashCommand command)
+    private async Task HandleSetChannelCommand(SocketSlashCommand Command)
     {
-        Channel = command.Data.Options.First().Value as IMessageChannel;
+        Channel = Command.Data.Options.First().Value as IMessageChannel;
 
         // Write the new ChannelId to Channel.json
         JsonInterface JsonInterface = new();
         JsonInterface.WriteToJson(Channel.Id, ChannelFilePath);
-
-        Logger Logger = new();
-        Logger.JsonLog(Channel.Id.ToString(), ChannelFilePath);
 
         // Also reset MessageId to avoid dumb crashed / force the bot to resend leaderboard
         LeaderboardMessageId = 0;
@@ -319,46 +293,38 @@ public class Program
         // Write the new messageid to Message.json
         JsonInterface.WriteToJson(LeaderboardMessageId, MessageFilePath);
 
-        Logger.JsonLog(LeaderboardMessageId.ToString(), MessageFilePath);
-
-        await command.RespondAsync($"Leaderboard will be sent in {command.Data.Options.First().Value} from now on", ephemeral: true);
+        await Command.RespondAsync($"Leaderboard will be sent in {Command.Data.Options.First().Value} from now on", ephemeral: true);
     }
 
-    private async Task HandleAddUserCommand(SocketSlashCommand command)
+    private async Task HandleAddUserCommand(SocketSlashCommand Command)
     {
         // Add inputet user to Users list
-        Users.Add(command.Data.Options.First().Value.ToString(), command.Data.Options.ElementAt(1).Value.ToString());
+        Users.Add(Command.Data.Options.First().Value.ToString(), Command.Data.Options.ElementAt(1).Value.ToString());
 
         // Write to Users file
         JsonInterface JsonInterface = new();
         JsonInterface.WriteToJson(Users, UsersFilePath);
 
-        Logger Logger = new();
-        Logger.JsonLog(Users.ToString(), UsersFilePath);
-
-        await command.RespondAsync($"Added user {command.Data.Options.First().Value} to leaderboard", ephemeral: true);
+        await Command.RespondAsync($"Added user {Command.Data.Options.First().Value} to leaderboard", ephemeral: true);
 
         await GetPersonalBests();
     }
 
-    private async Task HandleRemoveUserCommand(SocketSlashCommand command)
+    private async Task HandleRemoveUserCommand(SocketSlashCommand Command)
     {
         // Remove inputet user from Users list
-        Users.Remove(command.Data.Options.First().Value.ToString());
+        Users.Remove(Command.Data.Options.First().Value.ToString());
 
         // Write to Users file
         JsonInterface JsonInterface = new();
         JsonInterface.WriteToJson(Users, UsersFilePath);
 
-        Logger Logger = new();
-        Logger.JsonLog(Users.ToString(), UsersFilePath);
-
-        await command.RespondAsync($"Removed user {command.Data.Options.First().Value} from leaderboard", ephemeral: true);
+        await Command.RespondAsync($"Removed user {Command.Data.Options.First().Value} from leaderboard", ephemeral: true);
 
         await GetPersonalBests();
     }
 
-    private async Task HandleListUsersCommand(SocketSlashCommand command)
+    private async Task HandleListUsersCommand(SocketSlashCommand Command)
     {
         string Text = "";
         for (int i = 0; i < Users.Count; i++)
@@ -398,12 +364,12 @@ public class Program
         Embed.AddField("Users on leaderbaords", Text)
             .WithFooter("Usernames follow the structure:\n[speedrun.com] | [steam]\nIf only one name shows, they are the same");
 
-        await command.RespondAsync(embed: Embed.Build());
+        await Command.RespondAsync(embed: Embed.Build());
     }
 
-    private async Task HandleUpdateLeaderboardCommand(SocketSlashCommand command)
+    private async Task HandleUpdateLeaderboardCommand(SocketSlashCommand Command)
     {
-        await command.RespondAsync("Updating leaderboard", ephemeral: true);
+        await Command.RespondAsync("Updating leaderboard", ephemeral: true);
 
         await GetPersonalBests();
     }
@@ -488,9 +454,7 @@ public class Program
         List<CleanedResponse> Amc = new();
         List<CleanedResponse> Srm = new();
         List<CleanedResponse> Mel = new();
-
         List<CleanedResponse> Cm = new();
-
         List<CleanedResponse> SpLp = new();
 
         TimeCleaner TimeClean = new();
@@ -576,6 +540,7 @@ public class Program
         // Clean and parse LP scores
         for (int i = 0; i < RawLpResponse.data.Count; i++)
         {
+            // Compare each added User with each user in lp.nekz.me to only save the Users added to this bot
             foreach (string User in Users.Values)
             {
                 if (RawLpResponse.data[i].name == User)
@@ -590,9 +555,7 @@ public class Program
         Amc = Amc.OrderBy(o => o.Place).ToList();
         Srm = Srm.OrderBy(o => o.Place).ToList();
         Mel = Mel.OrderBy(o => o.Place).ToList();
-
         Cm = Cm.OrderBy(o => o.Place).ToList();
-
         SpLp = SpLp.OrderBy(o => o.PortalCount).ToList();
 
         // Clean all lists
@@ -615,22 +578,22 @@ public class Program
         EmbedTextBuilder TextBuilder = new();
 
         embed.AddField("NoSLA",
-            TextBuilder.BuildText(NoSLA, true, false, false));
+            TextBuilder.BuildText(NoSLA, 0));
 
         embed.AddField("Amc",
-            TextBuilder.BuildText(Amc, false, false, false));
+            TextBuilder.BuildText(Amc, 1));
 
         embed.AddField("Speedrun Mod",
-            TextBuilder.BuildText(Srm, true, false, false));
+            TextBuilder.BuildText(Srm, 2));
 
         embed.AddField("Portal Stories: Mel",
-            TextBuilder.BuildText(Mel, true, false, false));
+            TextBuilder.BuildText(Mel, 3));
 
         embed.AddField("SP CM Best Place",
-            TextBuilder.BuildText(Cm, true, true, false));
+            TextBuilder.BuildText(Cm, 4));
 
         embed.AddField("SP Least Portals",
-            TextBuilder.BuildText(SpLp, true, false, true));
+            TextBuilder.BuildText(SpLp, 5));
 
         embed.AddField("\u200B",
             $"Last updated {new TimestampTag(DateTimeOffset.UtcNow, TimestampTagStyles.Relative)}")
@@ -647,17 +610,16 @@ public class Program
             // Write the new messageid to Message.json
             JsonInterface JsonInterface = new();
             JsonInterface.WriteToJson(LeaderboardMessageId, MessageFilePath);
-
-            Logger Logger = new();
-            Logger.JsonLog(LeaderboardMessageId.ToString(), MessageFilePath);
         }
         // Else, edit it
         else
         {
-            await Channel.ModifyMessageAsync(LeaderboardMessageId, x =>
+            await Channel.ModifyMessageAsync((ulong)LeaderboardMessageId, x =>
             {
                 x.Embed = embed.Build();
             });
         }
     }
+
+    #endregion
 }

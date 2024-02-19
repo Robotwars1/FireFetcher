@@ -5,7 +5,7 @@ namespace FireFetcher
     {
         private const string LogFolder = "Logs/";
 
-        private static void CheckLogFolder()
+        private static void CheckLogFolderExists()
         {
             if (!Directory.Exists(LogFolder))
             {
@@ -18,7 +18,7 @@ namespace FireFetcher
             // Write general logging info to console
             Console.WriteLine(Text);
 
-            CheckLogFolder();
+            CheckLogFolderExists();
 
             string FilePath = Path.Combine(LogFolder, "General-Log.txt");
 
@@ -30,7 +30,7 @@ namespace FireFetcher
 
         public void JsonLog(string Data, string File)
         {
-            CheckLogFolder();
+            CheckLogFolderExists();
 
             string FilePath = Path.Combine(LogFolder, "Json-Log.txt");
 
@@ -45,7 +45,7 @@ namespace FireFetcher
             // Write command logging to console
             Console.WriteLine($"[{DateTime.Now}] {User} used the command {CommandName}");
 
-            CheckLogFolder();
+            CheckLogFolderExists();
 
             string FilePath = Path.Combine(LogFolder, "Command-Log.txt");
 

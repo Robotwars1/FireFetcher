@@ -4,9 +4,9 @@ namespace FireFetcher
 {
     internal class EmbedTextBuilder
     {
-        public string BuildText(List<Program.CleanedResponse> List, bool Singleplayer, bool Cm, bool LP)
+        public string BuildText(List<Program.CleanedResponse> List, int CategoryIndex)
         {
-            // If empty list
+            // If empty list, use early exit
             if (List.Count == 0)
             {
                 return "No runs available";
@@ -17,144 +17,45 @@ namespace FireFetcher
 
             StringBuilder Sb = new("");
 
-            if (Singleplayer)
+            for (int i = 0; i < List.Count; i++)
             {
-                if (Cm)
+                // Black magic to solve ties
+                if (List[i].Place == LastPlace)
                 {
-                    for (int i = 0; i < List.Count; i++)
-                    {
-                        if (List[i].Place == LastPlace)
-                        {
-                            Offset++;
-                        }
-
-                        int Position = i - Offset;
-
-                        switch (Position)
-                        {
-                            case 0:
-                                if (i == 0)
-                                {
-                                    Sb.Append($"1st - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
-                                }
-                                // If there is a tie at 1st
-                                else
-                                {
-                                    Sb.Append($"\n1st - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
-                                }
-                                break;
-                            case 1:
-                                Sb.Append($"\n2nd - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
-                                break;
-                            case 2:
-                                Sb.Append($"\n3rd - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
-                                break;
-                            case > 2:
-                                Sb.Append($"\n{Position + 1}th - {List[Position + Offset].Runner} - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
-                                break;
-                        }
-
-                        LastPlace = List[i].Place;
-                    }
+                    Offset++;
                 }
-                else if (LP)
+                int Position = i - Offset;
+
+                // If not first line, make sure everything gets a newline
+                if (i > 0)
                 {
-                    for (int i = 0; i < List.Count; i++)
-                    {
-                        if (List[i].Place == LastPlace)
-                        {
-                            Offset++;
-                        }
-
-                        int Position = i - Offset;
-
-                        switch (Position)
-                        {
-                            case 0:
-                                if (i == 0)
-                                {
-                                    Sb.Append($"1st - {List[Position + Offset].Runner} - {List[Position + Offset].PortalCount} Portals");
-                                }
-                                // If there is a tie at 1st
-                                else
-                                {
-                                    Sb.Append($"\n1st - {List[Position + Offset].Runner} - {List[Position + Offset].PortalCount} Portals");
-                                }
-                                break;
-                            case 1:
-                                Sb.Append($"\n2nd - {List[Position + Offset].Runner} - {List[Position + Offset].PortalCount} Portals");
-                                break;
-                            case 2:
-                                Sb.Append($"\n3rd - {List[Position + Offset].Runner} - {List[Position + Offset].PortalCount} Portals");
-                                break;
-                            case > 2:
-                                Sb.Append($"\n{Position + 1}th - {List[Position + Offset].Runner} - {List[Position + Offset].PortalCount} Portals");
-                                break;
-                        }
-
-                        LastPlace = List[i].Place;
-                    }
+                    Sb.Append('\n');
                 }
-                // If a fullgame run
+
+                // Add universal info
+                Sb.Append($"{ConvertPlace(Position + 1)} - {List[Position + Offset].Runner}");
+
+                // If Coop, add partner
+                if (CategoryIndex == 1)
+                {
+                    Sb.Append($" & {List[Position + Offset].Partner}");
+                }
+                
+                // If LP, add PortalCount, If CM, add BestPlace, otherwise add time
+                if (CategoryIndex == 5)
+                {
+                    Sb.Append($" - {List[Position + Offset].PortalCount} Portals");
+                }
+                else if (CategoryIndex == 4)
+                {
+                    Sb.Append($" - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
+                }
                 else
                 {
-                    for (int i = 0; i < List.Count; i++)
-                    {
-                        switch (i)
-                        {
-                            case 0:
-                                if (i == 0)
-                                {
-                                    Sb.Append($"1st - {List[i].Runner} - {List[i].Time}");
-                                }
-                                // If there is a tie at 1st
-                                else
-                                {
-                                    Sb.Append($"\n1st - {List[i].Runner} - {List[i].Time}");
-                                }
-                                break;
-                            case 1:
-                                Sb.Append($"\n2nd - {List[i].Runner} - {List[i].Time}");
-                                break;
-                            case 2:
-                                Sb.Append($"\n3rd - {List[i].Runner} - {List[i].Time}");
-                                break;
-                            case > 2:
-                                Sb.Append($"\n{i + 1}th - {List[i].Runner} - {List[i].Time}");
-                                break;
-                        }
-                    }
+                    Sb.Append($" - {List[Position + Offset].Time}");
                 }
-            }
-            // If Coop
-            else
-            {
-                for (int i = 0; i < List.Count; i++)
-                {
-                    switch (i)
-                    {
-                        case 0:
-                            if (i == 0)
-                            {
-                                Sb.Append($"1st - {List[i].Runner} & {List[i].Partner} - {List[i].Time}");
-                            }
-                            // If there is a tie at 1st
-                            else
-                            {
-                                Sb.Append($"\n1st - {List[i].Runner} & {List[i].Partner} - {List[i].Time}");
-                            }
-                            break;
-                        case 1:
-                            Sb.Append($"\n2nd - {List[i].Runner} & {List[i].Partner} - {List[i].Time}");
-                            break;
-                        case 2:
-                            Sb.Append($"\n3rd - {List[i].Runner} & {List[i].Partner} - {List[i].Time}");
-                            break;
-                        case > 2:
-                            Sb.Append($"\n{i + 1}th - {List[i].Runner} & {List[i].Partner} - {List[i].Time}");
-                            break;
-                    }
-                }
+
+                LastPlace = List[i].Place;
             }
 
             // Return the newly created leaderboards text
