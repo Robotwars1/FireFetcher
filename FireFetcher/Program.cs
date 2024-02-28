@@ -3,7 +3,6 @@ using Discord.Net;
 using Discord.WebSocket;
 using Newtonsoft.Json;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 // Thingy to call other classes (in other .cs files)
 using FireFetcher;
@@ -13,6 +12,7 @@ public class Program
     public static Task Main(string[] args) => new Program().MainAsync();
 
     private readonly JsonInterface JsonInterface = new();
+    private readonly ApiRequester ApiRequester = new();
 
     private DiscordSocketClient Client;
 
@@ -30,106 +30,6 @@ public class Program
         PropertyNameCaseInsensitive = true
     };
 
-    #region Data Fetching Classes
-
-    public class SrcResponse
-    {
-        public List<Data> data { get; set; }
-    }
-
-    public class Data
-    {
-        public int place { get; set; }
-        public Run run { get; set; }
-    }
-
-    public class Run
-    {
-        public string game { get; set; }
-        public string category { get; set; }
-        public List<Player> players { get; set; }
-        public Times times { get; set; }
-        public Values values { get; set; }
-    }
-
-    public class Player
-    {
-        public Uri uri { get; set; }
-    }
-
-    public class Times
-    {
-        public string primary { get; set; }
-    }
-
-    public class Values
-    {
-        [JsonPropertyName("9l7x7xzn")]
-        public string sla { get; set; }
-        [JsonPropertyName("38dj54e8")]
-        public string amc { get; set; }
-        [JsonPropertyName("wl333p9l")]
-        public string MelInbounds { get; set; }
-    }
-
-    public class SrcProfileResponse
-    {
-        public ProfileData data { get; set; }
-    }
-
-    public class ProfileData
-    {
-        public Names names { get; set; }
-    }
-
-    public class Names
-    {
-        public string international { get; set; }
-    }
-
-    public class BoardsResponse
-    {
-        public BoardsTimes times { get; set; }
-    }
-
-    public class BoardsTimes
-    {
-        public SP SP { get; set; }
-    }
-
-    public class SP
-    {
-        public Chambers chambers { get; set; }
-    }
-
-    public class Chambers
-    {
-        public BestRank bestRank { get; set; }
-    }
-
-    public class BestRank
-    {
-        public ScoreData scoreData { get; set; }
-        public object map { get; set; }
-    }
-
-    public class ScoreData
-    {
-        public string playerRank { get; set; }
-    }
-
-    public class LpResponse
-    {
-        public List<LpData> data { get; set; }
-    }
-
-    public class LpData
-    {
-        public string name { get; set; }
-        public int score { get; set; }
-        public int rank { get; set; }
-    }
-
     // Classes for cleaned data
     public class CleanedResponse
     {
@@ -140,8 +40,6 @@ public class Program
         public string Map { get; set; }
         public int PortalCount { get; set; }
     }
-
-    #endregion
 
     public async Task MainAsync()
     {
@@ -376,78 +274,19 @@ public class Program
 
     private async Task GetPersonalBests()
     {
-        List<SrcResponse> JsonData = new();
-        List<BoardsResponse> RawBoardsData = new();
+        List<ApiRequester.SrcResponse> RawSrcData = new();
+        List<ApiRequester.BoardsResponse> RawBoardsData = new();
+        ApiRequester.LpResponse RawLpData = new();
 
-        // Itterate through speedrun.com usernames
-        foreach (string User in Users.Keys)
+        // Get data for each user
+        foreach (KeyValuePair<string, string> User in Users)
         {
-            // Get speedrun.com pbs
-            var client = new HttpClient();
-
-            // Create the Url to where needed data is gathered
-            UriBuilder UriBuilder = new();
-            UriBuilder.Scheme = "http";
-            UriBuilder.Host = "www.speedrun.com";
-            UriBuilder.Path = "api/v1/users/";
-            UriBuilder.Path += $"{User}/";
-            UriBuilder.Path += "personal-bests";
-            string Url = UriBuilder.ToString();
-
-            var response = await client.GetAsync(Url);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var json = await response.Content.ReadAsStringAsync();
-
-                // Parse the contents as a .json
-                SrcResponse TempDataHolder = System.Text.Json.JsonSerializer.Deserialize<SrcResponse>(json, _readOptions);
-                JsonData.Add(TempDataHolder);
-            }
+            RawSrcData.Add(System.Text.Json.JsonSerializer.Deserialize<ApiRequester.SrcResponse>(ApiRequester.RequestData(0, User.Key)));
+            RawBoardsData.Add(System.Text.Json.JsonSerializer.Deserialize<ApiRequester.BoardsResponse>(ApiRequester.RequestData(1, User.Value)));
         }
 
-        // Itterate through steam usernames
-        foreach (string User in Users.Values)
-        {
-            // Get board.portal2.sr pbs
-            var client = new HttpClient();
-
-            UriBuilder UriBuilder = new();
-            UriBuilder.Scheme = "http";
-            UriBuilder.Host = "board.portal2.sr";
-            UriBuilder.Path = "profile/";
-            UriBuilder.Path += $"{User}/";
-            UriBuilder.Path += "json";
-            string Url = UriBuilder.ToString();
-
-            var response = await client.GetAsync(Url);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var json = await response.Content.ReadAsStringAsync();
-
-                // Parse the contents as a .json
-                BoardsResponse TempHolder = System.Text.Json.JsonSerializer.Deserialize<BoardsResponse>(json, _readOptions);
-                RawBoardsData.Add(TempHolder);
-            }
-        }
-
-        // Get lp.nekz.me pbs
-        var LpClient = new HttpClient();
-
-        string LpUrl = "https://lp.nekz.me/api/v1/sp";
-
-        var LpResponse = await LpClient.GetAsync(LpUrl);
-
-        LpResponse RawLpResponse = new();
-
-        if (LpResponse.IsSuccessStatusCode)
-        {
-            var json = await LpResponse.Content.ReadAsStringAsync();
-
-            // Parse the contents as a .json
-            RawLpResponse = System.Text.Json.JsonSerializer.Deserialize<LpResponse>(json, _readOptions);
-        }
+        // Then request LP data
+        RawLpData = System.Text.Json.JsonSerializer.Deserialize<ApiRequester.LpResponse>(ApiRequester.RequestData(2, null));
 
         // Clean data to only keep the specific pbs we want to show
         List<CleanedResponse> NoSLA = new();
@@ -460,29 +299,29 @@ public class Program
         TimeCleaner TimeClean = new();
 
         // Clean and parse src runs
-        for (int i = 0; i < JsonData.Count; i++)
+        for (int i = 0; i < RawSrcData.Count; i++)
         {
-            for (int j = 0; j < JsonData[i].data.Count; j++)
+            for (int j = 0; j < RawSrcData[i].data.Count; j++)
             {
                 // If game is Portal 2 and category is Singleplayer and it is NoSLA
-                if (JsonData[i].data[j].run.game == "om1mw4d2" && JsonData[i].data[j].run.category == "jzd33ndn" && JsonData[i].data[j].run.values.sla == "z196dyy1")
+                if (RawSrcData[i].data[j].run.game == "om1mw4d2" && RawSrcData[i].data[j].run.category == "jzd33ndn" && RawSrcData[i].data[j].run.values.sla == "z196dyy1")
                 {
                     // Call function to clean the time
-                    string CleanTime = TimeClean.Clean(JsonData[i].data[j].run.times.primary);
+                    string CleanTime = TimeClean.Clean(RawSrcData[i].data[j].run.times.primary);
 
-                    NoSLA.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users.ElementAt(i).Key, Time = CleanTime });
+                    NoSLA.Add(new CleanedResponse() { Place = RawSrcData[i].data[j].place, Runner = Users.ElementAt(i).Key, Time = CleanTime });
                 }
                 // If game is Portal 2 and category coop and it is Amc
-                else if (JsonData[i].data[j].run.game == "om1mw4d2" && JsonData[i].data[j].run.category == "l9kv40kg" && JsonData[i].data[j].run.values.amc == "mln3x8nq")
+                else if (RawSrcData[i].data[j].run.game == "om1mw4d2" && RawSrcData[i].data[j].run.category == "l9kv40kg" && RawSrcData[i].data[j].run.values.amc == "mln3x8nq")
                 {
                     // Call function to clean the time
-                    string CleanTime = TimeClean.Clean(JsonData[i].data[j].run.times.primary);
+                    string CleanTime = TimeClean.Clean(RawSrcData[i].data[j].run.times.primary);
 
                     // Get second player
                     var client = new HttpClient();
                     string SecondPlayer = "";
 
-                    foreach (Player player in JsonData[i].data[j].run.players)
+                    foreach (ApiRequester.Player player in RawSrcData[i].data[j].run.players)
                     {
                         var response = await client.GetAsync(player.uri);
 
@@ -491,7 +330,7 @@ public class Program
                         {
                             var json = await response.Content.ReadAsStringAsync();
 
-                            SrcProfileResponse ProfileData = System.Text.Json.JsonSerializer.Deserialize<SrcProfileResponse>(json, _readOptions);
+                            ApiRequester.SrcProfileResponse ProfileData = System.Text.Json.JsonSerializer.Deserialize<ApiRequester.SrcProfileResponse>(json, _readOptions);
 
                             // Check that we grabbed the other player
                             if (ProfileData.data.names.international != Users.ElementAt(i).Key)
@@ -502,23 +341,23 @@ public class Program
                         }
                     }
 
-                    Amc.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users.ElementAt(i).Key, Partner = SecondPlayer, Time = CleanTime });
+                    Amc.Add(new CleanedResponse() { Place = RawSrcData[i].data[j].place, Runner = Users.ElementAt(i).Key, Partner = SecondPlayer, Time = CleanTime });
                 }
                 // If game is Portal 2 Speedrun Mod and category is Single Player
-                else if (JsonData[i].data[j].run.game == "lde3eme6" && JsonData[i].data[j].run.category == "ndx940vd")
+                else if (RawSrcData[i].data[j].run.game == "lde3eme6" && RawSrcData[i].data[j].run.category == "ndx940vd")
                 {
                     // Call function to clean the time
-                    string CleanTime = TimeClean.Clean(JsonData[i].data[j].run.times.primary);
+                    string CleanTime = TimeClean.Clean(RawSrcData[i].data[j].run.times.primary);
 
-                    Srm.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users.ElementAt(i).Key, Time = CleanTime });
+                    Srm.Add(new CleanedResponse() { Place = RawSrcData[i].data[j].place, Runner = Users.ElementAt(i).Key, Time = CleanTime });
                 }
                 // If game is Portal Stories Mel and category is Story Mode and is Inbounds
-                else if (JsonData[i].data[j].run.game == "j1nz9l1p" && JsonData[i].data[j].run.category == "q25oowgk" && JsonData[i].data[j].run.values.MelInbounds == "4lx8vp31")
+                else if (RawSrcData[i].data[j].run.game == "j1nz9l1p" && RawSrcData[i].data[j].run.category == "q25oowgk" && RawSrcData[i].data[j].run.values.MelInbounds == "4lx8vp31")
                 {
                     // Call function to clean the time
-                    string CleanTime = TimeClean.Clean(JsonData[i].data[j].run.times.primary);
+                    string CleanTime = TimeClean.Clean(RawSrcData[i].data[j].run.times.primary);
 
-                    Mel.Add(new CleanedResponse() { Place = JsonData[i].data[j].place, Runner = Users.ElementAt(i).Key, Time = CleanTime });
+                    Mel.Add(new CleanedResponse() { Place = RawSrcData[i].data[j].place, Runner = Users.ElementAt(i).Key, Time = CleanTime });
                 }
             }
         }
@@ -538,14 +377,14 @@ public class Program
         }
 
         // Clean and parse LP scores
-        for (int i = 0; i < RawLpResponse.data.Count; i++)
+        for (int i = 0; i < RawLpData.data.Count; i++)
         {
             // Compare each added User with each user in lp.nekz.me to only save the Users added to this bot
             foreach (string User in Users.Values)
             {
-                if (RawLpResponse.data[i].name == User)
+                if (RawLpData.data[i].name == User)
                 {
-                    SpLp.Add(new CleanedResponse() { Runner = User, PortalCount = RawLpResponse.data[i].score, Place = RawLpResponse.data[i].rank }); 
+                    SpLp.Add(new CleanedResponse() { Runner = User, PortalCount = RawLpData.data[i].score, Place = RawLpData.data[i].rank }); 
                 }
             }
         }
