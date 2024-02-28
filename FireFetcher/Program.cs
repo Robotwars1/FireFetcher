@@ -18,7 +18,7 @@ public class Program
 
     IMessageChannel Channel;
     ulong? LeaderboardMessageId;
-    Dictionary<string, string> Users = new();
+    List<Username> Users = new();
 
     // Paths to each .json file
     const string UsersFilePath = "Data/Users.json";
@@ -29,6 +29,14 @@ public class Program
     {
         PropertyNameCaseInsensitive = true
     };
+
+    public class Username
+    {
+        public SocketUser Discord { get; set; }
+        public string SpeedrunCom { get; set; }
+        public string Steam { get; set; }
+        public string Nickname { get; set; }
+    }
 
     // Classes for cleaned data
     public class CleanedResponse
@@ -53,7 +61,7 @@ public class Program
         var token = File.ReadAllText("Token.txt");
 
         // Read saved data
-        Users = (Dictionary<string, string>)JsonInterface.ReadJson(UsersFilePath, "Users");
+        Users = (List<Username>)JsonInterface.ReadJson(UsersFilePath, "Users");
         LeaderboardMessageId = (ulong?)JsonInterface.ReadJson(MessageFilePath, "ID");
 
         // Start bot
@@ -90,17 +98,22 @@ public class Program
 
         // Command for adding user to leaderboard
         var AddUserCommand = new SlashCommandBuilder()
-            .WithName("add-user")
-            .WithDescription("Adds a user to be included in the leaderboard updates")
+            .WithName("link-accounts")
+            .WithDescription("Links steam and speedrun.com accounts for the leaderboards")
             .AddOption("src-username", ApplicationCommandOptionType.String, "Speedrun.com username", isRequired: true)
             .AddOption("cm-board-username", ApplicationCommandOptionType.String, "board.portal2.sr username", isRequired: true);
 
         // Command for removing user from leaderboard
         var RemoveUserCommand = new SlashCommandBuilder()
-            .WithName("remove-user")
-            .WithDescription("Removes a user from the leaderboard")
+            .WithName("remove-self")
+            .WithDescription("Removes self from the leaderboard")
             .AddOption("src-username", ApplicationCommandOptionType.String, "Speedrun.com username", isRequired: true)
             .AddOption("cm-board-username", ApplicationCommandOptionType.String, "board.portal2.sr username", isRequired: true);
+
+        var SetNickname = new SlashCommandBuilder()
+            .WithName("set-nickname")
+            .WithDescription("Set nickname for leaderboards")
+            .AddOption("nickname", ApplicationCommandOptionType.String, "Nickname", isRequired: true);
 
         var ListUsersCommand = new SlashCommandBuilder()
             .WithName("list-users")
@@ -118,6 +131,7 @@ public class Program
             await Client.CreateGlobalApplicationCommandAsync(SetChannelCommand.Build());
             await Client.CreateGlobalApplicationCommandAsync(AddUserCommand.Build());
             await Client.CreateGlobalApplicationCommandAsync(RemoveUserCommand.Build());
+            await Client.CreateGlobalApplicationCommandAsync(SetNickname.Build());
             await Client.CreateGlobalApplicationCommandAsync(ListUsersCommand.Build());
             await Client.CreateGlobalApplicationCommandAsync(UpdateLeaderboardCommand.Build());
         }
@@ -152,10 +166,13 @@ public class Program
                 await HandleSetChannelCommand(Command);
                 break;
             case "add-user":
-                await HandleAddUserCommand(Command);
+                await HandleLinkAccountsCommand(Command);
                 break;
             case "remove-user":
-                await HandleRemoveUserCommand(Command);
+                await HandleRemoveSelfCommand(Command);
+                break;
+            case "set-nickname":
+                await HandleSetNicknameCommand(Command);
                 break;
             case "list-users":
                 await HandleListUsersCommand(Command);
@@ -194,32 +211,114 @@ public class Program
         await Command.RespondAsync($"Leaderboard will be sent in {Command.Data.Options.First().Value} from now on", ephemeral: true);
     }
 
-    private async Task HandleAddUserCommand(SocketSlashCommand Command)
+    private async Task HandleLinkAccountsCommand(SocketSlashCommand Command)
     {
-        // Add inputet user to Users list
-        Users.Add(Command.Data.Options.First().Value.ToString(), Command.Data.Options.ElementAt(1).Value.ToString());
+        SocketUser User = Command.User;
+        bool AlreadyInUsers = false;
+        int UserIndex = 0;
+
+        // Check if User is already added to Users list
+        for (int i = 0; i < Users.Count; i++)
+        {
+            if (Users[i].Discord == User)
+            {
+                AlreadyInUsers = true;
+                UserIndex = i;
+                break;
+            }
+        }
+
+        string SrcUsername = Command.Data.Options.First().Value.ToString();
+        string SteamUsername = Command.Data.Options.ElementAt(1).Value.ToString();
+
+        if (AlreadyInUsers)
+        {
+            Users[UserIndex].SpeedrunCom = SrcUsername;
+            Users[UserIndex].Steam = SteamUsername;
+        }
+        else
+        {
+            Users.Add(new Username() { Discord = User, SpeedrunCom = SrcUsername, Steam = SteamUsername });
+        }
 
         // Write to Users file
         JsonInterface JsonInterface = new();
         JsonInterface.WriteToJson(Users, UsersFilePath);
 
-        await Command.RespondAsync($"Added user {Command.Data.Options.First().Value} to leaderboard", ephemeral: true);
+        await Command.RespondAsync($"Updated linked accounts for {User}", ephemeral: true);
 
+        // Update leaderboards when anything regarding users has been changed
         await GetPersonalBests();
     }
 
-    private async Task HandleRemoveUserCommand(SocketSlashCommand Command)
+    private async Task HandleRemoveSelfCommand(SocketSlashCommand Command)
     {
-        // Remove inputet user from Users list
-        Users.Remove(Command.Data.Options.First().Value.ToString());
+        SocketUser User = Command.User;
+        int UserIndex = -1;
 
-        // Write to Users file
-        JsonInterface JsonInterface = new();
-        JsonInterface.WriteToJson(Users, UsersFilePath);
+        // Get index of user
+        for (int i = 0; i < Users.Count; i++)
+        {
+            if (Users[i].Discord == User)
+            {
+                UserIndex = i;
+                break;
+            }
+        }
 
-        await Command.RespondAsync($"Removed user {Command.Data.Options.First().Value} from leaderboard", ephemeral: true);
+        // If user hasnt linked any accounts
+        if (UserIndex == -1)
+        {
+            await Command.RespondAsync($"User has no accounts linked", ephemeral: true);
+        }
+        else
+        {
+            Users.RemoveAt(UserIndex);
 
-        await GetPersonalBests();
+            // Write to Users file
+            JsonInterface JsonInterface = new();
+            JsonInterface.WriteToJson(Users, UsersFilePath);
+
+            await Command.RespondAsync($"Unlinked accounts for {User}", ephemeral: true);
+
+            // Update leaderboards when anything regarding users has been changed
+            await GetPersonalBests();
+        }
+    }
+
+    private async Task HandleSetNicknameCommand(SocketSlashCommand Command)
+    {
+        SocketUser User = Command.User;
+        int UserIndex = -1;
+
+        // Get index of user
+        for (int i = 0; i < Users.Count; i++)
+        {
+            if (Users[i].Discord == User)
+            {
+                UserIndex = i;
+                break;
+            }
+        }
+
+        // If user hasnt linked any accounts
+        if (UserIndex == -1)
+        {
+            await Command.RespondAsync($"User has no accounts linked, cannot set Nickname", ephemeral: true);
+        }
+        else
+        {
+            Users[UserIndex].Nickname = Command.Data.Options.First().Value.ToString();
+
+            // Write to Users file
+            JsonInterface JsonInterface = new();
+            JsonInterface.WriteToJson(Users, UsersFilePath);
+
+            await Command.RespondAsync($"Changed nickname for {User}", ephemeral: true);
+
+            // Update leaderboards when anything regarding users has been changed
+            await GetPersonalBests();
+        }
     }
 
     private async Task HandleListUsersCommand(SocketSlashCommand Command)
@@ -227,29 +326,20 @@ public class Program
         string Text = "";
         for (int i = 0; i < Users.Count; i++)
         {
-            if (i == 0)
+            // If not first line, make sure everything gets a newline
+            if (i > 0)
             {
-                // If src and steam username are the same only write out once
-                if (Users.ElementAt(i).Key == Users.ElementAt(i).Value)
-                {
-                    Text = $"{Users.ElementAt(i).Key}";
-                }
-                else
-                {
-                    Text = $"{Users.ElementAt(i).Key} | {Users.ElementAt(i).Value}";
-                }
+                Text.Append('\n');
+            }
+
+            // If src and steam username are the same only write out once
+            if (Users[i].SpeedrunCom == Users[i].Steam)
+            {
+                Text += $"{Users[i].SpeedrunCom}";
             }
             else
             {
-                // If src and steam username are the same only write out once
-                if (Users.ElementAt(i).Key == Users.ElementAt(i).Value)
-                {
-                    Text += $"\n{Users.ElementAt(i).Key}";
-                }
-                else
-                {
-                    Text += $"\n{Users.ElementAt(i).Key} | {Users.ElementAt(i).Value}";
-                }
+                Text += $"{Users[i].SpeedrunCom} | {Users[i].Steam}";
             }
         }
 
@@ -279,10 +369,10 @@ public class Program
         ApiRequester.LpResponse RawLpData = new();
 
         // Get data for each user
-        foreach (KeyValuePair<string, string> User in Users)
+        for (int i = 0; i < Users.Count; i++)
         {
-            RawSrcData.Add(System.Text.Json.JsonSerializer.Deserialize<ApiRequester.SrcResponse>(ApiRequester.RequestData(0, User.Key)));
-            RawBoardsData.Add(System.Text.Json.JsonSerializer.Deserialize<ApiRequester.BoardsResponse>(ApiRequester.RequestData(1, User.Value)));
+            RawSrcData.Add(System.Text.Json.JsonSerializer.Deserialize<ApiRequester.SrcResponse>(ApiRequester.RequestData(0, Users[i].SpeedrunCom)));
+            RawBoardsData.Add(System.Text.Json.JsonSerializer.Deserialize<ApiRequester.BoardsResponse>(ApiRequester.RequestData(1, Users[i].Steam)));
         }
 
         // Then request LP data
@@ -309,7 +399,7 @@ public class Program
                     // Call function to clean the time
                     string CleanTime = TimeClean.Clean(RawSrcData[i].data[j].run.times.primary);
 
-                    NoSLA.Add(new CleanedResponse() { Place = RawSrcData[i].data[j].place, Runner = Users.ElementAt(i).Key, Time = CleanTime });
+                    NoSLA.Add(new CleanedResponse() { Place = RawSrcData[i].data[j].place, Runner = Users[i].SpeedrunCom, Time = CleanTime });
                 }
                 // If game is Portal 2 and category coop and it is Amc
                 else if (RawSrcData[i].data[j].run.game == "om1mw4d2" && RawSrcData[i].data[j].run.category == "l9kv40kg" && RawSrcData[i].data[j].run.values.amc == "mln3x8nq")
@@ -333,7 +423,7 @@ public class Program
                             ApiRequester.SrcProfileResponse ProfileData = System.Text.Json.JsonSerializer.Deserialize<ApiRequester.SrcProfileResponse>(json, _readOptions);
 
                             // Check that we grabbed the other player
-                            if (ProfileData.data.names.international != Users.ElementAt(i).Key)
+                            if (ProfileData.data.names.international != Users[i].SpeedrunCom)
                             {
                                 SecondPlayer = ProfileData.data.names.international;
                                 break;
@@ -341,7 +431,7 @@ public class Program
                         }
                     }
 
-                    Amc.Add(new CleanedResponse() { Place = RawSrcData[i].data[j].place, Runner = Users.ElementAt(i).Key, Partner = SecondPlayer, Time = CleanTime });
+                    Amc.Add(new CleanedResponse() { Place = RawSrcData[i].data[j].place, Runner = Users[i].SpeedrunCom, Partner = SecondPlayer, Time = CleanTime });
                 }
                 // If game is Portal 2 Speedrun Mod and category is Single Player
                 else if (RawSrcData[i].data[j].run.game == "lde3eme6" && RawSrcData[i].data[j].run.category == "ndx940vd")
@@ -349,7 +439,7 @@ public class Program
                     // Call function to clean the time
                     string CleanTime = TimeClean.Clean(RawSrcData[i].data[j].run.times.primary);
 
-                    Srm.Add(new CleanedResponse() { Place = RawSrcData[i].data[j].place, Runner = Users.ElementAt(i).Key, Time = CleanTime });
+                    Srm.Add(new CleanedResponse() { Place = RawSrcData[i].data[j].place, Runner = Users[i].SpeedrunCom, Time = CleanTime });
                 }
                 // If game is Portal Stories Mel and category is Story Mode and is Inbounds
                 else if (RawSrcData[i].data[j].run.game == "j1nz9l1p" && RawSrcData[i].data[j].run.category == "q25oowgk" && RawSrcData[i].data[j].run.values.MelInbounds == "4lx8vp31")
@@ -357,7 +447,7 @@ public class Program
                     // Call function to clean the time
                     string CleanTime = TimeClean.Clean(RawSrcData[i].data[j].run.times.primary);
 
-                    Mel.Add(new CleanedResponse() { Place = RawSrcData[i].data[j].place, Runner = Users.ElementAt(i).Key, Time = CleanTime });
+                    Mel.Add(new CleanedResponse() { Place = RawSrcData[i].data[j].place, Runner = Users[i].SpeedrunCom, Time = CleanTime });
                 }
             }
         }
@@ -368,11 +458,11 @@ public class Program
         {
             try
             {
-                Cm.Add(new CleanedResponse() { Runner = Users.ElementAt(i).Value, Place = int.Parse(RawBoardsData[i].times.SP.chambers.bestRank.scoreData.playerRank), Map = MapParser.ParseMap(RawBoardsData[i].times.SP.chambers.bestRank.map) });
+                Cm.Add(new CleanedResponse() { Runner = Users[i].Steam, Place = int.Parse(RawBoardsData[i].times.SP.chambers.bestRank.scoreData.playerRank), Map = MapParser.ParseMap(RawBoardsData[i].times.SP.chambers.bestRank.map) });
             }
             catch
             {
-                Console.WriteLine($"Failed to parse cm data for {Users.ElementAt(i).Value}");
+                Console.WriteLine($"Failed to parse cm data for {Users[i].Steam}");
             }
         }
 
@@ -380,11 +470,11 @@ public class Program
         for (int i = 0; i < RawLpData.data.Count; i++)
         {
             // Compare each added User with each user in lp.nekz.me to only save the Users added to this bot
-            foreach (string User in Users.Values)
+            for (int j = 0; j < Users.Count; j++)
             {
-                if (RawLpData.data[i].name == User)
+                if (RawLpData.data[i].name == Users[j].Steam)
                 {
-                    SpLp.Add(new CleanedResponse() { Runner = User, PortalCount = RawLpData.data[i].score, Place = RawLpData.data[i].rank }); 
+                    SpLp.Add(new CleanedResponse() { Runner = Users[j].Steam, PortalCount = RawLpData.data[i].score, Place = RawLpData.data[i].rank }); 
                 }
             }
         }
