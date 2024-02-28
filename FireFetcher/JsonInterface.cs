@@ -38,7 +38,7 @@ namespace FireFetcher
                 switch (ReturnValueType)
                 {
                     case "Users":
-                        ReadResult = JsonSerializer.Deserialize<Dictionary<string, string>>(JsonFile, ReadOptions);
+                        ReadResult = JsonSerializer.Deserialize<List<Program.Username>>(JsonFile, ReadOptions);
                         break;
                     case "ID":
                         ReadResult = JsonSerializer.Deserialize<ulong>(JsonFile, ReadOptions);
