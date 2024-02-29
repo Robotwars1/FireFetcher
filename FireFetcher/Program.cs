@@ -218,14 +218,14 @@ public class Program
             .WithName("link-accounts")
             .WithDescription("Links steam and speedrun.com accounts for the leaderboards")
             .AddOption("src-username", ApplicationCommandOptionType.String, "Speedrun.com username", isRequired: true)
-            .AddOption("cm-board-username", ApplicationCommandOptionType.String, "board.portal2.sr username", isRequired: true);
+            .AddOption("steam", ApplicationCommandOptionType.String, "Steam username", isRequired: true);
 
         // Command for removing user from leaderboard
         var RemoveUserCommand = new SlashCommandBuilder()
             .WithName("remove-self")
             .WithDescription("Removes self from the leaderboard")
             .AddOption("src-username", ApplicationCommandOptionType.String, "Speedrun.com username", isRequired: true)
-            .AddOption("cm-board-username", ApplicationCommandOptionType.String, "board.portal2.sr username", isRequired: true);
+            .AddOption("steam", ApplicationCommandOptionType.String, "Steam username", isRequired: true);
 
         var SetNickname = new SlashCommandBuilder()
             .WithName("set-nickname")
