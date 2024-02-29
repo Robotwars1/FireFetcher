@@ -1,7 +1,7 @@
 ﻿
 namespace FireFetcher
 {
-    internal class ResponseCleaner
+    internal class ListCleaner
     {
         // Function to remove any extra runs a given user might have
         public List<Program.CleanedResponse> GetBestRunFromEachUser(List<Program.CleanedResponse> InputList)

@@ -365,7 +365,7 @@ public class Program
         await Command.RespondAsync($"Updated linked accounts for {User}", ephemeral: true);
 
         // Update leaderboards when anything regarding users has been changed
-        await GetPersonalBests();
+        await CreateLeaderboard();
     }
 
     private async Task HandleRemoveSelfCommand(SocketSlashCommand Command)
@@ -399,7 +399,7 @@ public class Program
             await Command.RespondAsync($"Unlinked accounts for {User}", ephemeral: true);
 
             // Update leaderboards when anything regarding users has been changed
-            await GetPersonalBests();
+            await CreateLeaderboard();
         }
     }
 
@@ -434,7 +434,7 @@ public class Program
             await Command.RespondAsync($"Changed nickname for {User}", ephemeral: true);
 
             // Update leaderboards when anything regarding users has been changed
-            await GetPersonalBests();
+            await CreateLeaderboard();
         }
     }
 
@@ -476,10 +476,10 @@ public class Program
     {
         await Command.RespondAsync("Updating leaderboard", ephemeral: true);
 
-        await GetPersonalBests();
+        await CreateLeaderboard();
     }
 
-    private async Task GetPersonalBests()
+    private async Task CreateLeaderboard()
     {
         List<SrcResponse> RawSrcData = new();
         List<BoardsResponse> RawBoardsData = new();
@@ -605,7 +605,7 @@ public class Program
         SpLp = SpLp.OrderBy(o => o.PortalCount).ToList();
 
         // Clean all lists
-        ResponseCleaner Cleaner = new();
+        ListCleaner Cleaner = new();
         Cleaner.GetBestRunFromEachUser(NoSLA);
         Cleaner.GetBestRunFromEachUser(Amc);
         Cleaner.GetBestRunFromEachUser(Srm);

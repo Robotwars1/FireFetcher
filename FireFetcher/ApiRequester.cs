@@ -7,13 +7,6 @@ namespace FireFetcher
 
         public async Task<string> RequestData(int Site, string? User)
         {
-            await GetData(Site, User);
-
-            return ReturnData;
-        }
-
-        private async Task GetData(int Site, string? User)
-        {
             var Client = new HttpClient();
 
             string Url = "";
@@ -53,6 +46,8 @@ namespace FireFetcher
             {
                 Console.WriteLine($"Failed to get data from site index: {Site}");
             }
+
+            return ReturnData;
         }
     }
 }
