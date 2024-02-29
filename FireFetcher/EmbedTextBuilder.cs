@@ -32,8 +32,15 @@ namespace FireFetcher
                     Sb.Append('\n');
                 }
 
-                // Add universal info
-                Sb.Append($"{ConvertPlace(Position + 1)} - {List[Position + Offset].Runner}");
+                // Add universal info, set runners name as nickname if exists
+                if (List[Position + Offset].RunnerNickname != null)
+                {
+                    Sb.Append($"{ConvertPlace(Position + 1)} - {List[Position + Offset].RunnerNickname}");
+                }
+                else
+                {
+                    Sb.Append($"{ConvertPlace(Position + 1)} - {List[Position + Offset].Runner}");
+                }
 
                 // If Coop, add partner
                 if (CategoryIndex == 1)

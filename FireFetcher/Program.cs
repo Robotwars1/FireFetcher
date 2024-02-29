@@ -153,6 +153,7 @@ public class Program
     public class CleanedResponse
     {
         public string Runner { get; set; }
+        public string RunnerNickname { get; set; }
         public string Partner { get; set; }
         public int Place { get; set; }
         public string Time { get; set; }
@@ -515,7 +516,7 @@ public class Program
                     // Call function to clean the time
                     string CleanTime = TimeClean.Clean(RawSrcData[i].data[j].run.times.primary);
 
-                    NoSLA.Add(new CleanedResponse() { Place = RawSrcData[i].data[j].place, Runner = Users[i].SpeedrunCom, Time = CleanTime });
+                    NoSLA.Add(new CleanedResponse() { Place = RawSrcData[i].data[j].place, Runner = Users[i].SpeedrunCom, RunnerNickname = Users[i].Nickname, Time = CleanTime });
                 }
                 // If game is Portal 2 and category coop and it is Amc
                 else if (RawSrcData[i].data[j].run.game == "om1mw4d2" && RawSrcData[i].data[j].run.category == "l9kv40kg" && RawSrcData[i].data[j].run.values.amc == "mln3x8nq")
@@ -547,7 +548,7 @@ public class Program
                         }
                     }
 
-                    Amc.Add(new CleanedResponse() { Place = RawSrcData[i].data[j].place, Runner = Users[i].SpeedrunCom, Partner = SecondPlayer, Time = CleanTime });
+                    Amc.Add(new CleanedResponse() { Place = RawSrcData[i].data[j].place, Runner = Users[i].SpeedrunCom, RunnerNickname = Users[i].Nickname, Partner = SecondPlayer, Time = CleanTime });
                 }
                 // If game is Portal 2 Speedrun Mod and category is Single Player
                 else if (RawSrcData[i].data[j].run.game == "lde3eme6" && RawSrcData[i].data[j].run.category == "ndx940vd")
@@ -555,7 +556,7 @@ public class Program
                     // Call function to clean the time
                     string CleanTime = TimeClean.Clean(RawSrcData[i].data[j].run.times.primary);
 
-                    Srm.Add(new CleanedResponse() { Place = RawSrcData[i].data[j].place, Runner = Users[i].SpeedrunCom, Time = CleanTime });
+                    Srm.Add(new CleanedResponse() { Place = RawSrcData[i].data[j].place, Runner = Users[i].SpeedrunCom, RunnerNickname = Users[i].Nickname, Time = CleanTime });
                 }
                 // If game is Portal Stories Mel and category is Story Mode and is Inbounds
                 else if (RawSrcData[i].data[j].run.game == "j1nz9l1p" && RawSrcData[i].data[j].run.category == "q25oowgk" && RawSrcData[i].data[j].run.values.MelInbounds == "4lx8vp31")
@@ -563,7 +564,7 @@ public class Program
                     // Call function to clean the time
                     string CleanTime = TimeClean.Clean(RawSrcData[i].data[j].run.times.primary);
 
-                    Mel.Add(new CleanedResponse() { Place = RawSrcData[i].data[j].place, Runner = Users[i].SpeedrunCom, Time = CleanTime });
+                    Mel.Add(new CleanedResponse() { Place = RawSrcData[i].data[j].place, Runner = Users[i].SpeedrunCom, RunnerNickname = Users[i].Nickname, Time = CleanTime });
                 }
             }
         }
@@ -574,7 +575,7 @@ public class Program
         {
             try
             {
-                Cm.Add(new CleanedResponse() { Runner = Users[i].Steam, Place = int.Parse(RawBoardsData[i].times.SP.chambers.bestRank.scoreData.playerRank), Map = MapParser.ParseMap(RawBoardsData[i].times.SP.chambers.bestRank.map) });
+                Cm.Add(new CleanedResponse() { Runner = Users[i].Steam, RunnerNickname = Users[i].Nickname, Place = int.Parse(RawBoardsData[i].times.SP.chambers.bestRank.scoreData.playerRank), Map = MapParser.ParseMap(RawBoardsData[i].times.SP.chambers.bestRank.map) });
             }
             catch
             {
@@ -590,7 +591,7 @@ public class Program
             {
                 if (RawLpData.data[i].name == Users[j].Steam)
                 {
-                    SpLp.Add(new CleanedResponse() { Runner = Users[j].Steam, PortalCount = RawLpData.data[i].score, Place = RawLpData.data[i].rank }); 
+                    SpLp.Add(new CleanedResponse() { Runner = Users[j].Steam, RunnerNickname = Users[j].Nickname, PortalCount = RawLpData.data[i].score, Place = RawLpData.data[i].rank }); 
                 }
             }
         }
