@@ -16,6 +16,11 @@ public class Program
     private readonly JsonInterface JsonInterface = new();
     private readonly ApiRequester ApiRequester = new();
 
+    private readonly DiscordSocketConfig Config = new()
+    {
+        GatewayIntents = GatewayIntents.None
+    };
+
     private DiscordSocketClient Client;
 
     IMessageChannel Channel;
@@ -166,7 +171,7 @@ public class Program
 
     public async Task MainAsync()
     {
-        Client = new DiscordSocketClient();
+        Client = new DiscordSocketClient(Config);
 
         // Setup logging
         Client.Log += Log;
