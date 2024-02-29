@@ -1,13 +1,15 @@
 # FireFetcher
 
 # Categories
-### Speedrun.com
+### speedrun.com
 - Portal 2 NoSLA
 - Portal 2 Amc
 - Portal 2 Speedrun Mod
 - Portal Stories: Mel
 ### board.portal2.sr
 - Portal 2 Challenge Mode
+### lp.nekz.me
+- Portal 2 Least Portals
 
 # How it works
 ### Leaderboards
@@ -20,6 +22,15 @@ The leaderboards part of the bot is an automatic way to fetch users pbs from spe
 4. Clean duplicate runs and only save best run from each player
 5. Build the embed
 6. Post / edit message
+
+# Deployment
+### Ubuntu
+1. Using the command prompt, navigate to the folder containing the solution file (FireFetcher.sln)
+2. Run ``dotnet publish -c release -r ubuntu.16.04-x64 --self-contained``
+3. Copy the publish folder (../bin/Release/net6.0/ubuntu.16.04-x64/publish) to the Ubuntu machine
+4. Open the Ubuntu machine terminal (CLI) and go to the project directory
+5. Provide execute permissions: ``chmod +x ./FireFetcher``
+6. Execute the application by running ``./FireFetcher``
 
 # Architecture
 ### CategoryIndexes
