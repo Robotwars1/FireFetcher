@@ -21,7 +21,7 @@ namespace FireFetcher
         {
             FileStream JsonFile = File.Create(FilePath);
             var JsonWriter = new Utf8JsonWriter(JsonFile);
-            JsonSerializer.Serialize(JsonWriter, Data, WriteOptions);
+            JsonSerializer.Serialize(JsonWriter, Data.ToString(), WriteOptions);
             JsonFile.Close();
 
             // Log write operation

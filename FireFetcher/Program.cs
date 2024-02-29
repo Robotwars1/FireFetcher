@@ -6,6 +6,7 @@ using System.Text.Json;
 
 // Thingy to call other classes (in other .cs files)
 using FireFetcher;
+using System.Text.Json.Serialization;
 
 public class Program
 {
@@ -29,6 +30,116 @@ public class Program
     {
         PropertyNameCaseInsensitive = true
     };
+
+    #region speedrun.com
+
+    public class SrcResponse
+    {
+        public List<Data> data { get; set; }
+    }
+
+    public class Data
+    {
+        public int place { get; set; }
+        public Run run { get; set; }
+    }
+
+    public class Run
+    {
+        public string game { get; set; }
+        public string category { get; set; }
+        public List<Player> players { get; set; }
+        public Times times { get; set; }
+        public Values values { get; set; }
+    }
+
+    public class Player
+    {
+        public Uri uri { get; set; }
+    }
+
+    public class Times
+    {
+        public string primary { get; set; }
+    }
+
+    public class Values
+    {
+        [JsonPropertyName("9l7x7xzn")]
+        public string sla { get; set; }
+        [JsonPropertyName("38dj54e8")]
+        public string amc { get; set; }
+        [JsonPropertyName("wl333p9l")]
+        public string MelInbounds { get; set; }
+    }
+
+    public class SrcProfileResponse
+    {
+        public ProfileData data { get; set; }
+    }
+
+    public class ProfileData
+    {
+        public Names names { get; set; }
+    }
+
+    public class Names
+    {
+        public string international { get; set; }
+    }
+
+    #endregion
+
+    #region boards.portal2.sr
+
+    public class BoardsResponse
+    {
+        public BoardsTimes times { get; set; }
+    }
+
+    public class BoardsTimes
+    {
+        public SP SP { get; set; }
+    }
+
+    public class SP
+    {
+        public Chambers chambers { get; set; }
+    }
+
+    public class Chambers
+    {
+        public BestRank bestRank { get; set; }
+    }
+
+    public class BestRank
+    {
+        public ScoreData scoreData { get; set; }
+        public object map { get; set; }
+    }
+
+    public class ScoreData
+    {
+        public string playerRank { get; set; }
+    }
+
+    #endregion
+
+    #region lp.nekz.me
+
+    public class LpResponse
+    {
+        public List<LpData> data { get; set; }
+    }
+
+    public class LpData
+    {
+        public string name { get; set; }
+        public int score { get; set; }
+        public int rank { get; set; }
+    }
+
+    #endregion
 
     public class Username
     {
@@ -62,6 +173,11 @@ public class Program
 
         // Read saved data
         Users = (List<Username>)JsonInterface.ReadJson(UsersFilePath, "Users");
+        // If Users is returned as a null list, re-create it to avoid program crashing
+        if (Users == null)
+        {
+            Users = new();
+        }
         LeaderboardMessageId = (ulong?)JsonInterface.ReadJson(MessageFilePath, "ID");
 
         // Start bot
@@ -165,7 +281,7 @@ public class Program
             case "set-channel":
                 await HandleSetChannelCommand(Command);
                 break;
-            case "add-user":
+            case "link-accounts":
                 await HandleLinkAccountsCommand(Command);
                 break;
             case "remove-user":
@@ -364,19 +480,19 @@ public class Program
 
     private async Task GetPersonalBests()
     {
-        List<ApiRequester.SrcResponse> RawSrcData = new();
-        List<ApiRequester.BoardsResponse> RawBoardsData = new();
-        ApiRequester.LpResponse RawLpData = new();
+        List<SrcResponse> RawSrcData = new();
+        List<BoardsResponse> RawBoardsData = new();
+        LpResponse RawLpData = new();
 
         // Get data for each user
         for (int i = 0; i < Users.Count; i++)
         {
-            RawSrcData.Add(System.Text.Json.JsonSerializer.Deserialize<ApiRequester.SrcResponse>(ApiRequester.RequestData(0, Users[i].SpeedrunCom)));
-            RawBoardsData.Add(System.Text.Json.JsonSerializer.Deserialize<ApiRequester.BoardsResponse>(ApiRequester.RequestData(1, Users[i].Steam)));
+            RawSrcData.Add(System.Text.Json.JsonSerializer.Deserialize<SrcResponse>(ApiRequester.RequestData(0, Users[i].SpeedrunCom).Result, _readOptions));
+            RawBoardsData.Add(System.Text.Json.JsonSerializer.Deserialize<BoardsResponse>(ApiRequester.RequestData(1, Users[i].Steam).Result, _readOptions));
         }
 
         // Then request LP data
-        RawLpData = System.Text.Json.JsonSerializer.Deserialize<ApiRequester.LpResponse>(ApiRequester.RequestData(2, null));
+        RawLpData = System.Text.Json.JsonSerializer.Deserialize<LpResponse>(ApiRequester.RequestData(2, null).Result, _readOptions);
 
         // Clean data to only keep the specific pbs we want to show
         List<CleanedResponse> NoSLA = new();
@@ -411,7 +527,7 @@ public class Program
                     var client = new HttpClient();
                     string SecondPlayer = "";
 
-                    foreach (ApiRequester.Player player in RawSrcData[i].data[j].run.players)
+                    foreach (Player player in RawSrcData[i].data[j].run.players)
                     {
                         var response = await client.GetAsync(player.uri);
 
@@ -420,7 +536,7 @@ public class Program
                         {
                             var json = await response.Content.ReadAsStringAsync();
 
-                            ApiRequester.SrcProfileResponse ProfileData = System.Text.Json.JsonSerializer.Deserialize<ApiRequester.SrcProfileResponse>(json, _readOptions);
+                            SrcProfileResponse ProfileData = System.Text.Json.JsonSerializer.Deserialize<SrcProfileResponse>(json, _readOptions);
 
                             // Check that we grabbed the other player
                             if (ProfileData.data.names.international != Users[i].SpeedrunCom)
