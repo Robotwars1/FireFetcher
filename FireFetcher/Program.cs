@@ -229,7 +229,7 @@ public class Program
         // Command for adding user to leaderboard
         var AddUserCommand = new SlashCommandBuilder()
             .WithName("link-accounts")
-            .WithDescription("Links steam and speedrun.com accounts for the leaderboards")
+            .WithDescription("Links speedrun.com and steam accounts for the leaderboards")
             .AddOption("src-username", ApplicationCommandOptionType.String, "Speedrun.com username", isRequired: true)
             .AddOption("steam", ApplicationCommandOptionType.String, "Steam username", isRequired: true);
 
