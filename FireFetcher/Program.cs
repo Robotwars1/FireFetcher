@@ -3,10 +3,11 @@ using Discord.Net;
 using Discord.WebSocket;
 using Newtonsoft.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Timers;
 
 // Thingy to call other classes (in other .cs files)
 using FireFetcher;
-using System.Text.Json.Serialization;
 
 public class Program
 {
@@ -20,6 +21,8 @@ public class Program
     IMessageChannel Channel;
     ulong? LeaderboardMessageId;
     List<Username> Users = new();
+
+    int LastHour = DateTime.Now.Hour;
 
     // Paths to each .json file
     const string UsersFilePath = "Data/Users.json";
@@ -188,6 +191,11 @@ public class Program
         // Hooking up more commands
         Client.Ready += Client_Ready;
         Client.SlashCommandExecuted += SlashCommandHandler;
+
+        // Setup the timer for updating leaderboards every hour
+        System.Timers.Timer HourTimer = new System.Timers.Timer(60000); // Call function every minute
+        HourTimer.Elapsed += new ElapsedEventHandler(CheckHour);
+        HourTimer.Start();
 
         // Block this task until the program is closed.
         await Task.Delay(-1);
@@ -668,4 +676,14 @@ public class Program
     }
 
     #endregion
+
+    private void CheckHour(object source, ElapsedEventArgs e)
+    {
+        // If an hour has passed, update leaderboards
+        if (LastHour < DateTime.Now.Hour || (LastHour == 23 && DateTime.Now.Hour == 0))
+        {
+            LastHour = DateTime.Now.Hour;
+            CreateLeaderboard();
+        }
+    }
 }
