@@ -151,10 +151,10 @@ public class Program
 
     public class Username
     {
-        public SocketUser Discord { get; set; }
-        public string SpeedrunCom { get; set; }
-        public string Steam { get; set; }
-        public string Nickname { get; set; }
+        public ulong DiscordID { get; set; }
+        public string SpeedrunCom { get; set; } = string.Empty;
+        public string Steam { get; set; } = string.Empty;
+        public string Nickname { get; set; } = string.Empty;
     }
 
     // Classes for cleaned data
@@ -188,6 +188,11 @@ public class Program
             Users = new();
         }
         LeaderboardMessageId = (ulong?)JsonInterface.ReadJson(MessageFilePath, "ID");
+        // If LeaderboardMessageId returns null, set it to base value (0)
+        if (LeaderboardMessageId == null)
+        {
+            LeaderboardMessageId = 0;
+        }
 
         // Start bot
         await Client.LoginAsync(TokenType.Bot, token);
@@ -330,27 +335,27 @@ public class Program
 
         // Write the new ChannelId to Channel.json
         JsonInterface JsonInterface = new();
-        JsonInterface.WriteToJson(Channel.Id, ChannelFilePath);
+        JsonInterface.WriteToJson(Channel.Id.ToString(), ChannelFilePath);
 
         // Also reset MessageId to avoid dumb crashed / force the bot to resend leaderboard
         LeaderboardMessageId = 0;
 
         // Write the new messageid to Message.json
-        JsonInterface.WriteToJson(LeaderboardMessageId, MessageFilePath);
+        JsonInterface.WriteToJson(LeaderboardMessageId.ToString(), MessageFilePath);
 
         await Command.RespondAsync($"Leaderboard will be sent in {Command.Data.Options.First().Value} from now on", ephemeral: true);
     }
 
     private async Task HandleLinkAccountsCommand(SocketSlashCommand Command)
     {
-        SocketUser User = Command.User;
+        ulong UserID = Command.User.Id;
         bool AlreadyInUsers = false;
         int UserIndex = 0;
 
         // Check if User is already added to Users list
         for (int i = 0; i < Users.Count; i++)
         {
-            if (Users[i].Discord == User)
+            if (Users[i].DiscordID == UserID)
             {
                 AlreadyInUsers = true;
                 UserIndex = i;
@@ -368,14 +373,14 @@ public class Program
         }
         else
         {
-            Users.Add(new Username() { Discord = User, SpeedrunCom = SrcUsername, Steam = SteamUsername });
+            Users.Add(new Username() { DiscordID = UserID, SpeedrunCom = SrcUsername, Steam = SteamUsername });
         }
 
         // Write to Users file
         JsonInterface JsonInterface = new();
         JsonInterface.WriteToJson(Users, UsersFilePath);
 
-        await Command.RespondAsync($"Updated linked accounts for {User}", ephemeral: true);
+        await Command.RespondAsync($"Updated linked accounts for {Command.User}", ephemeral: true);
 
         // Update leaderboards when anything regarding users has been changed
         await CreateLeaderboard();
@@ -383,13 +388,13 @@ public class Program
 
     private async Task HandleRemoveSelfCommand(SocketSlashCommand Command)
     {
-        SocketUser User = Command.User;
+        ulong UserID = Command.User.Id;
         int UserIndex = -1;
 
         // Get index of user
         for (int i = 0; i < Users.Count; i++)
         {
-            if (Users[i].Discord == User)
+            if (Users[i].DiscordID == UserID)
             {
                 UserIndex = i;
                 break;
@@ -409,7 +414,7 @@ public class Program
             JsonInterface JsonInterface = new();
             JsonInterface.WriteToJson(Users, UsersFilePath);
 
-            await Command.RespondAsync($"Unlinked accounts for {User}", ephemeral: true);
+            await Command.RespondAsync($"Unlinked accounts for {Command.User}", ephemeral: true);
 
             // Update leaderboards when anything regarding users has been changed
             await CreateLeaderboard();
@@ -418,13 +423,13 @@ public class Program
 
     private async Task HandleSetNicknameCommand(SocketSlashCommand Command)
     {
-        SocketUser User = Command.User;
+        ulong UserID = Command.User.Id;
         int UserIndex = -1;
 
         // Get index of user
         for (int i = 0; i < Users.Count; i++)
         {
-            if (Users[i].Discord == User)
+            if (Users[i].DiscordID == UserID)
             {
                 UserIndex = i;
                 break;
@@ -444,7 +449,7 @@ public class Program
             JsonInterface JsonInterface = new();
             JsonInterface.WriteToJson(Users, UsersFilePath);
 
-            await Command.RespondAsync($"Changed nickname for {User}", ephemeral: true);
+            await Command.RespondAsync($"Changed nickname for {Command.User}", ephemeral: true);
 
             // Update leaderboards when anything regarding users has been changed
             await CreateLeaderboard();
@@ -487,13 +492,27 @@ public class Program
 
     private async Task HandleUpdateLeaderboardCommand(SocketSlashCommand Command)
     {
-        await Command.RespondAsync("Updating leaderboard", ephemeral: true);
+        // If Channel isnt set then we cant send leaderboard and send error
+        if (Channel == null)
+        {
+            await Command.RespondAsync("Error: No channel set", ephemeral: true);
+        }
+        else
+        {
+            await Command.RespondAsync("Updating leaderboard", ephemeral: true);
 
-        await CreateLeaderboard();
+            await CreateLeaderboard();
+        }
     }
 
     private async Task CreateLeaderboard()
     {
+        // If Channel isnt set then we cant send leaderboard and return early
+        if (Channel == null)
+        {
+            return;
+        }
+
         List<SrcResponse> RawSrcData = new();
         List<BoardsResponse> RawBoardsData = new();
         LpResponse RawLpData = new();
@@ -552,8 +571,8 @@ public class Program
 
                             SrcProfileResponse ProfileData = System.Text.Json.JsonSerializer.Deserialize<SrcProfileResponse>(json, _readOptions);
 
-                            // Check that we grabbed the other player
-                            if (ProfileData.data.names.international != Users[i].SpeedrunCom)
+                            // Check that we grabbed the other player (Ignore capitalization)
+                            if (!string.Equals(ProfileData.data.names.international, Users[i].SpeedrunCom, StringComparison.OrdinalIgnoreCase))
                             {
                                 SecondPlayer = ProfileData.data.names.international;
                                 break;
@@ -602,7 +621,7 @@ public class Program
             // Compare each added User with each user in lp.nekz.me to only save the Users added to this bot
             for (int j = 0; j < Users.Count; j++)
             {
-                if (RawLpData.data[i].name == Users[j].Steam)
+                if (string.Equals(RawLpData.data[i].name, Users[j].Steam, StringComparison.OrdinalIgnoreCase))
                 {
                     SpLp.Add(new CleanedResponse() { Runner = Users[j].Steam, RunnerNickname = Users[j].Nickname, PortalCount = RawLpData.data[i].score, Place = RawLpData.data[i].rank }); 
                 }
@@ -668,7 +687,7 @@ public class Program
 
             // Write the new messageid to Message.json
             JsonInterface JsonInterface = new();
-            JsonInterface.WriteToJson(LeaderboardMessageId, MessageFilePath);
+            JsonInterface.WriteToJson(LeaderboardMessageId.ToString(), MessageFilePath);
         }
         // Else, edit it
         else

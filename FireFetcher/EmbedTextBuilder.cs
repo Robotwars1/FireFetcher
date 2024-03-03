@@ -33,7 +33,7 @@ namespace FireFetcher
                 }
 
                 // Add universal info, set runners name as nickname if exists
-                if (List[Position + Offset].RunnerNickname != null)
+                if (List[Position + Offset].RunnerNickname != "")
                 {
                     Sb.Append($"{ConvertPlace(Position + 1)} - {List[Position + Offset].RunnerNickname}");
                 }
