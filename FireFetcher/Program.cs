@@ -8,6 +8,7 @@ using System.Timers;
 
 // Thingy to call other classes (in other .cs files)
 using FireFetcher;
+using Discord.Commands;
 
 public class Program
 {
@@ -221,15 +222,19 @@ public class Program
 
     public async Task Client_Ready()
     {
+        List<ApplicationCommandProperties> Commands = new();
+
         var PingCommand = new SlashCommandBuilder()
             .WithName("ping")
             .WithDescription("Get bot latency");
+        Commands.Add(PingCommand.Build());
 
         // Command for setting which server channel to send leaderboard in
         var SetChannelCommand = new SlashCommandBuilder()
             .WithName("set-channel")
             .WithDescription("Sets which channel to send leaderboard in")
             .AddOption("channel", ApplicationCommandOptionType.Channel, "Channel", isRequired: true);
+        Commands.Add(SetChannelCommand.Build());
 
         // Command for adding user to leaderboard
         var AddUserCommand = new SlashCommandBuilder()
@@ -237,6 +242,7 @@ public class Program
             .WithDescription("Links speedrun.com and steam accounts for the leaderboards")
             .AddOption("src-username", ApplicationCommandOptionType.String, "Speedrun.com username", isRequired: true)
             .AddOption("steam", ApplicationCommandOptionType.String, "Steam username", isRequired: true);
+        Commands.Add(AddUserCommand.Build());
 
         // Command for removing user from leaderboard
         var RemoveUserCommand = new SlashCommandBuilder()
@@ -244,40 +250,26 @@ public class Program
             .WithDescription("Removes self from the leaderboard")
             .AddOption("src-username", ApplicationCommandOptionType.String, "Speedrun.com username", isRequired: true)
             .AddOption("steam", ApplicationCommandOptionType.String, "Steam username", isRequired: true);
+        Commands.Add(RemoveUserCommand.Build());
 
         var SetNickname = new SlashCommandBuilder()
             .WithName("set-nickname")
             .WithDescription("Set nickname for leaderboards")
             .AddOption("nickname", ApplicationCommandOptionType.String, "Nickname", isRequired: true);
+        Commands.Add(SetNickname.Build());
 
         var ListUsersCommand = new SlashCommandBuilder()
             .WithName("list-users")
             .WithDescription("Lists each added user");
+        Commands.Add(ListUsersCommand.Build());
 
         // Command for updating leaderboard
         var UpdateLeaderboardCommand = new SlashCommandBuilder()
             .WithName("update-leaderboard")
             .WithDescription("Forces an update of the leaderboard");
+        Commands.Add(UpdateLeaderboardCommand.Build());
 
-        try
-        {
-            // Create each slash command
-            await Client.CreateGlobalApplicationCommandAsync(PingCommand.Build());
-            await Client.CreateGlobalApplicationCommandAsync(SetChannelCommand.Build());
-            await Client.CreateGlobalApplicationCommandAsync(AddUserCommand.Build());
-            await Client.CreateGlobalApplicationCommandAsync(RemoveUserCommand.Build());
-            await Client.CreateGlobalApplicationCommandAsync(SetNickname.Build());
-            await Client.CreateGlobalApplicationCommandAsync(ListUsersCommand.Build());
-            await Client.CreateGlobalApplicationCommandAsync(UpdateLeaderboardCommand.Build());
-        }
-        catch (HttpException exception)
-        {
-            // If our command was invalid, we should catch an ApplicationCommandException. This exception contains the path of the error as well as the error message. You can serialize the Error field in the exception to get a visual of where your error is.
-            var json = JsonConvert.SerializeObject(exception.Errors, Formatting.Indented);
-
-            // You can send this error somewhere or just print it to the console, for this example we're just going to print it.
-            Console.WriteLine(json);
-        }
+        await Client.BulkOverwriteGlobalApplicationCommandsAsync(Commands.ToArray());
 
         // Gets channel id later than everything else cause it doesnt work otherwise ¯\_(ツ)_/¯
         ulong? ChannelId = (ulong?)JsonInterface.ReadJson(ChannelFilePath, "ID");
