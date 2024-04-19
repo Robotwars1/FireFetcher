@@ -1,14 +1,11 @@
 ﻿using Discord;
-using Discord.Net;
 using Discord.WebSocket;
-using Newtonsoft.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Timers;
 
 // Thingy to call other classes (in other .cs files)
 using FireFetcher;
-using Discord.Commands;
 
 public class Program
 {
@@ -153,6 +150,7 @@ public class Program
     public class Username
     {
         public ulong DiscordID { get; set; }
+        public string DiscordName { get; set; } = string.Empty;
         public string SpeedrunCom { get; set; } = string.Empty;
         public string Steam { get; set; } = string.Empty;
         public string Nickname { get; set; } = string.Empty;
@@ -341,6 +339,7 @@ public class Program
     private async Task HandleLinkAccountsCommand(SocketSlashCommand Command)
     {
         ulong UserID = Command.User.Id;
+        string Username = Command.User.Username;
         bool AlreadyInUsers = false;
         int UserIndex = 0;
 
@@ -365,7 +364,7 @@ public class Program
         }
         else
         {
-            Users.Add(new Username() { DiscordID = UserID, SpeedrunCom = SrcUsername, Steam = SteamUsername });
+            Users.Add(new Username() { DiscordID = UserID, DiscordName = Username, SpeedrunCom = SrcUsername, Steam = SteamUsername });
         }
 
         // Write to Users file
@@ -456,18 +455,10 @@ public class Program
             // If not first line, make sure everything gets a newline
             if (i > 0)
             {
-                Text.Append('\n');
+                Text += '\n';
             }
 
-            // If src and steam username are the same only write out once
-            if (Users[i].SpeedrunCom == Users[i].Steam)
-            {
-                Text += $"{Users[i].SpeedrunCom}";
-            }
-            else
-            {
-                Text += $"{Users[i].SpeedrunCom} | {Users[i].Steam}";
-            }
+            Text += Users[i].DiscordName;
         }
 
         if (Users.Count == 0)
@@ -476,8 +467,7 @@ public class Program
         }
 
         var Embed = new EmbedBuilder();
-        Embed.AddField("Users on leaderbaords", Text)
-            .WithFooter("Usernames follow the structure:\n[speedrun.com] | [steam]\nIf only one name shows, they are the same");
+        Embed.AddField("Users on leaderbaords", Text);
 
         await Command.RespondAsync(embed: Embed.Build());
     }
