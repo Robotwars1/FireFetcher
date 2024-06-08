@@ -227,6 +227,11 @@ public class Program
             .WithDescription("Get bot latency");
         Commands.Add(PingCommand.Build());
 
+        var HelpCommand = new SlashCommandBuilder()
+            .WithName("help")
+            .WithDescription("Show commands");
+        Commands.Add(HelpCommand.Build());
+
         // Command for setting which server channel to send leaderboard in
         var SetChannelCommand = new SlashCommandBuilder()
             .WithName("set-channel")
@@ -287,6 +292,9 @@ public class Program
             case "ping":
                 await HandlePingCommand(Command);
                 break;
+            case "help":
+                await HandleHelpCommand(Command);
+                break;
             case "set-channel":
                 await HandleSetChannelCommand(Command);
                 break;
@@ -315,6 +323,22 @@ public class Program
         var embed = new EmbedBuilder();
 
         embed.AddField("Yes I'm alive, now bugger off", "Latency: How should I know???");
+
+        await Command.RespondAsync(embed: embed.Build());
+    }
+
+    private async Task HandleHelpCommand(SocketSlashCommand Command)
+    {
+        var embed = new EmbedBuilder();
+
+        embed.AddField("/ping", "");
+        embed.AddField("/help", "");
+        embed.AddField("/set-channel", "");
+        embed.AddField("/link-accounts", "");
+        embed.AddField("/remove-user", "");
+        embed.AddField("/set-nickname", "");
+        embed.AddField("/list-users", "");
+        embed.AddField("/update-leaderboard", "");
 
         await Command.RespondAsync(embed: embed.Build());
     }
