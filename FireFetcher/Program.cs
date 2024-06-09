@@ -246,13 +246,11 @@ public class Program
             .AddOption("src-username", ApplicationCommandOptionType.String, "Speedrun.com username", isRequired: true)
             .AddOption("steam", ApplicationCommandOptionType.String, "Steam username", isRequired: true);
         Commands.Add(AddUserCommand.Build());
-        
+
         // Command for removing user from leaderboard
         var RemoveUserCommand = new SlashCommandBuilder()
             .WithName("remove-self")
-            .WithDescription("Removes self from the leaderboard")
-            .AddOption("src-username", ApplicationCommandOptionType.String, "Speedrun.com username", isRequired: true)
-            .AddOption("steam", ApplicationCommandOptionType.String, "Steam username", isRequired: true);
+            .WithDescription("Removes self from the leaderboard");
         Commands.Add(RemoveUserCommand.Build());
 
         var SetNickname = new SlashCommandBuilder()
