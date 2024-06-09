@@ -312,7 +312,7 @@ public class Program
             case "link-accounts":
                 await HandleLinkAccountsCommand(Command);
                 break;
-            case "remove-user":
+            case "remove-self":
                 await HandleRemoveSelfCommand(Command);
                 break;
             case "set-nickname":
@@ -331,27 +331,27 @@ public class Program
 
     private async Task HandlePingCommand(SocketSlashCommand Command)
     {
-        var embed = new EmbedBuilder();
+        var Embed = new EmbedBuilder();
 
-        embed.AddField("Yes I'm alive, now bugger off", "Latency: How should I know???");
+        Embed.AddField("Yes I'm alive, now bugger off", "Latency: How should I know???");
 
-        await Command.RespondAsync(embed: embed.Build());
+        await Command.RespondAsync(embed: Embed.Build());
     }
 
     private async Task HandleHelpCommand(SocketSlashCommand Command)
     {
-        var embed = new EmbedBuilder();
+        var Embed = new EmbedBuilder();
 
-        embed.AddField("/ping", "a");
-        embed.AddField("/help", "a");
-        embed.AddField("/set-channel", "a");
-        embed.AddField("/link-accounts", "a");
-        embed.AddField("/remove-user", "a");
-        embed.AddField("/set-nickname", "a");
-        embed.AddField("/list-users", "a");
-        embed.AddField("/update-leaderboard", "a");
+        Embed.AddField("/ping", "a");
+        Embed.AddField("/help", "a");
+        Embed.AddField("/set-channel", "a");
+        Embed.AddField("/link-accounts", "a");
+        Embed.AddField("/remove-self", "a");
+        Embed.AddField("/set-nickname", "a");
+        Embed.AddField("/list-users", "a");
+        Embed.AddField("/update-leaderboard", "a");
 
-        await Command.RespondAsync(embed: embed.Build());
+        await Command.RespondAsync(embed: Embed.Build());
     }
 
     private async Task HandleSetChannelCommand(SocketSlashCommand Command)
@@ -664,7 +664,7 @@ public class Program
         Cleaner.RemoveDuplicate(Amc);
 
         // Build the enbeded message
-        var embed = new EmbedBuilder
+        var Embed = new EmbedBuilder
         {
             Title = "Friendly Fire ON - Leaderboards"
         };
@@ -672,33 +672,20 @@ public class Program
         // Build all text fields
         EmbedTextBuilder TextBuilder = new();
 
-        embed.AddField("NoSLA",
-            TextBuilder.BuildText(NoSLA, 0));
-
-        embed.AddField("Amc",
-            TextBuilder.BuildText(Amc, 1));
-
-        embed.AddField("Speedrun Mod",
-            TextBuilder.BuildText(Srm, 2));
-
-        embed.AddField("Portal Stories: Mel",
-            TextBuilder.BuildText(Mel, 3));
-
-        embed.AddField("SP CM Best Place",
-            TextBuilder.BuildText(Cm, 4));
-
-        embed.AddField("SP Least Portals",
-            TextBuilder.BuildText(SpLp, 5));
-
-        embed.AddField("\u200B",
-            $"Last updated {new TimestampTag(DateTimeOffset.UtcNow, TimestampTagStyles.Relative)}")
+        Embed.AddField("NoSLA", TextBuilder.BuildText(NoSLA, 0));
+        Embed.AddField("Amc", TextBuilder.BuildText(Amc, 1));
+        Embed.AddField("Speedrun Mod", TextBuilder.BuildText(Srm, 2));
+        Embed.AddField("Portal Stories: Mel", TextBuilder.BuildText(Mel, 3));
+        Embed.AddField("SP CM Best Place", TextBuilder.BuildText(Cm, 4));
+        Embed.AddField("SP Least Portals", TextBuilder.BuildText(SpLp, 5));
+        Embed.AddField("\u200B", $"Last updated {new TimestampTag(DateTimeOffset.UtcNow, TimestampTagStyles.Relative)}")
             // Add the footer to the last field
             .WithFooter(footer => footer.Text = $"To get added to the leaderboards, do /add-user");
 
         // If leaderboard doesnt exist, send it
         if (LeaderboardMessageId == 0)
         {
-            IUserMessage LeaderboardMessage = await Channel.SendMessageAsync(embed: embed.Build());
+            IUserMessage LeaderboardMessage = await Channel.SendMessageAsync(embed: Embed.Build());
 
             LeaderboardMessageId = LeaderboardMessage.Id;
 
@@ -711,7 +698,7 @@ public class Program
         {
             await Channel.ModifyMessageAsync((ulong)LeaderboardMessageId, x =>
             {
-                x.Embed = embed.Build();
+                x.Embed = Embed.Build();
             });
         }
     }
