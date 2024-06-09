@@ -238,7 +238,7 @@ public class Program
             .WithDescription("Sets which channel to send leaderboard in")
             .AddOption("channel", ApplicationCommandOptionType.Channel, "Channel", isRequired: true);
         Commands.Add(SetChannelCommand.Build());
-
+        
         // Command for adding user to leaderboard
         var AddUserCommand = new SlashCommandBuilder()
             .WithName("link-accounts")
@@ -246,7 +246,7 @@ public class Program
             .AddOption("src-username", ApplicationCommandOptionType.String, "Speedrun.com username", isRequired: true)
             .AddOption("steam", ApplicationCommandOptionType.String, "Steam username", isRequired: true);
         Commands.Add(AddUserCommand.Build());
-
+        
         // Command for removing user from leaderboard
         var RemoveUserCommand = new SlashCommandBuilder()
             .WithName("remove-self")
@@ -272,8 +272,19 @@ public class Program
             .WithDescription("Forces an update of the leaderboard");
         Commands.Add(UpdateLeaderboardCommand.Build());
 
-        await Client.BulkOverwriteGlobalApplicationCommandsAsync(Commands.ToArray());
+        // First make sure all commands exist for the bot
+        await Client.CreateGlobalApplicationCommandAsync(PingCommand.Build());
+        await Client.CreateGlobalApplicationCommandAsync(HelpCommand.Build());
+        await Client.CreateGlobalApplicationCommandAsync(SetChannelCommand.Build());
+        await Client.CreateGlobalApplicationCommandAsync(AddUserCommand.Build());
+        await Client.CreateGlobalApplicationCommandAsync(RemoveUserCommand.Build());
+        await Client.CreateGlobalApplicationCommandAsync(SetNickname.Build());
+        await Client.CreateGlobalApplicationCommandAsync(ListUsersCommand.Build());
+        await Client.CreateGlobalApplicationCommandAsync(UpdateLeaderboardCommand.Build());
 
+        // Then make sure no old commands are allowed to exist
+        await Client.BulkOverwriteGlobalApplicationCommandsAsync(Commands.ToArray());
+        
         // Gets channel id later than everything else cause it doesnt work otherwise ¯\_(ツ)_/¯
         ulong? ChannelId = (ulong?)JsonInterface.ReadJson(ChannelFilePath, "ID");
         if (ChannelId != null)
@@ -331,14 +342,14 @@ public class Program
     {
         var embed = new EmbedBuilder();
 
-        embed.AddField("/ping", "");
-        embed.AddField("/help", "");
-        embed.AddField("/set-channel", "");
-        embed.AddField("/link-accounts", "");
-        embed.AddField("/remove-user", "");
-        embed.AddField("/set-nickname", "");
-        embed.AddField("/list-users", "");
-        embed.AddField("/update-leaderboard", "");
+        embed.AddField("/ping", "a");
+        embed.AddField("/help", "a");
+        embed.AddField("/set-channel", "a");
+        embed.AddField("/link-accounts", "a");
+        embed.AddField("/remove-user", "a");
+        embed.AddField("/set-nickname", "a");
+        embed.AddField("/list-users", "a");
+        embed.AddField("/update-leaderboard", "a");
 
         await Command.RespondAsync(embed: embed.Build());
     }
@@ -526,12 +537,12 @@ public class Program
         // Get data for each user
         for (int i = 0; i < Users.Count; i++)
         {
-            RawSrcData.Add(System.Text.Json.JsonSerializer.Deserialize<SrcResponse>(ApiRequester.RequestData(0, Users[i].SpeedrunCom).Result, _readOptions));
-            RawBoardsData.Add(System.Text.Json.JsonSerializer.Deserialize<BoardsResponse>(ApiRequester.RequestData(1, Users[i].Steam).Result, _readOptions));
+            RawSrcData.Add(JsonSerializer.Deserialize<SrcResponse>(ApiRequester.RequestData(0, Users[i].SpeedrunCom).Result, _readOptions));
+            RawBoardsData.Add(JsonSerializer.Deserialize<BoardsResponse>(ApiRequester.RequestData(1, Users[i].Steam).Result, _readOptions));
         }
 
         // Then request LP data
-        RawLpData = System.Text.Json.JsonSerializer.Deserialize<LpResponse>(ApiRequester.RequestData(2, null).Result, _readOptions);
+        RawLpData = JsonSerializer.Deserialize<LpResponse>(ApiRequester.RequestData(2, null).Result, _readOptions);
 
         // Clean data to only keep the specific pbs we want to show
         List<CleanedResponse> NoSLA = new();
@@ -575,7 +586,7 @@ public class Program
                         {
                             var json = await response.Content.ReadAsStringAsync();
 
-                            SrcProfileResponse ProfileData = System.Text.Json.JsonSerializer.Deserialize<SrcProfileResponse>(json, _readOptions);
+                            SrcProfileResponse ProfileData = JsonSerializer.Deserialize<SrcProfileResponse>(json, _readOptions);
 
                             // Check that we grabbed the other player (Ignore capitalization)
                             if (!string.Equals(ProfileData.data.names.international, Users[i].SpeedrunCom, StringComparison.OrdinalIgnoreCase))
