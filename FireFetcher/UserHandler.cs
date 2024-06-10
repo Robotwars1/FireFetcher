@@ -20,7 +20,7 @@ namespace FireFetcher
             Users ??= new();
         }
 
-        public async void LinkAccount(ulong UserID, string Username, string SrcUsername, string SteamUsername)
+        public async void LinkAccount(ulong UserID, string Username, string SrcUsername, string BoardProfileID, string SteamUsername)
         {
             bool AlreadyInUsers = false;
             int UserIndex = 0;
@@ -39,11 +39,12 @@ namespace FireFetcher
             if (AlreadyInUsers)
             {
                 Users[UserIndex].SpeedrunCom = SrcUsername;
+                Users[UserIndex].BoardProfileID = BoardProfileID;
                 Users[UserIndex].Steam = SteamUsername;
             }
             else
             {
-                Users.Add(new Username() { DiscordID = UserID, DiscordName = Username, SpeedrunCom = SrcUsername, Steam = SteamUsername });
+                Users.Add(new Username() { DiscordID = UserID, DiscordName = Username, SpeedrunCom = SrcUsername, BoardProfileID = BoardProfileID, Steam = SteamUsername });
             }
 
             // Write changes to Users file

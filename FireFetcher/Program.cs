@@ -154,6 +154,7 @@ public class Program
         public ulong DiscordID { get; set; }
         public string DiscordName { get; set; } = string.Empty;
         public string SpeedrunCom { get; set; } = string.Empty;
+        public string BoardProfileID { get; set; } = string.Empty;
         public string Steam { get; set; } = string.Empty;
         public string Nickname { get; set; } = string.Empty;
     }
@@ -278,7 +279,7 @@ public class Program
         for (int i = 0; i < Users.Count; i++)
         {
             RawSrcData.Add(JsonSerializer.Deserialize<SrcResponse>(ApiRequester.RequestData(0, Users[i].SpeedrunCom).Result, _readOptions));
-            RawBoardsData.Add(JsonSerializer.Deserialize<BoardsResponse>(ApiRequester.RequestData(1, Users[i].Steam).Result, _readOptions));
+            RawBoardsData.Add(JsonSerializer.Deserialize<BoardsResponse>(ApiRequester.RequestData(1, Users[i].BoardProfileID).Result, _readOptions));
         }
 
         // Then request LP data

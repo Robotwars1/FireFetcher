@@ -12,12 +12,12 @@ public class UserCommands : InteractionModuleBase<SocketInteractionContext>
     public UserHandler UserHandler { get; set; }
 
     [SlashCommand("link-accounts", "Links speedrun.com and steam accounts for the leaderboards")]
-    public async Task LinkAccount(string SrcUsername, string SteamUsername)
+    public async Task LinkAccount(string SrcUsername, string BoardProfileID, string SteamUsername)
     {
         ulong UserID = Context.User.Id;
         string Username = Context.User.Username;
 
-        UserHandler.LinkAccount(UserID, Username, SrcUsername, SteamUsername);
+        UserHandler.LinkAccount(UserID, Username, SrcUsername, BoardProfileID, SteamUsername);
 
         await RespondAsync($"Updated linked accounts for {Context.User}", ephemeral: true);
     }
