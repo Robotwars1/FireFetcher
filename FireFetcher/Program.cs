@@ -222,7 +222,7 @@ public class Program
     private Task Log(LogMessage msg)
     {
         Logger Logger = new();
-        Logger.GeneralLog(msg.ToString());
+        Logger.GeneralLog(msg.Message);
 
         return Task.CompletedTask;
     }

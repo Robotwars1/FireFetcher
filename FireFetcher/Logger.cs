@@ -16,7 +16,7 @@ namespace FireFetcher
         public void GeneralLog(string Text)
         {
             // Write general logging info to console
-            Console.WriteLine(Text);
+            Console.WriteLine($"[{DateTime.Now}] {Text}");
 
             CheckLogFolderExists();
 
@@ -24,7 +24,7 @@ namespace FireFetcher
 
             // Write to log
             using StreamWriter OutputFile = File.AppendText(FilePath);
-            OutputFile.WriteLine(Text);
+            OutputFile.WriteLine($"[{DateTime.Now}] {Text}");
             OutputFile.Close();
         }
 
