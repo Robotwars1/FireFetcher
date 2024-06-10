@@ -195,20 +195,12 @@ public class Program
         // DO NOT MAKE TOKEN PUBLIC
         var token = File.ReadAllText("Token.txt");
 
-        // Read saved data
-        LeaderboardMessageId = (ulong?)JsonInterface.ReadJson(MessageFilePath, "ID");
-        // If LeaderboardMessageId returns null, set it to base value (0)
-        if (LeaderboardMessageId == null)
-        {
-            LeaderboardMessageId = 0;
-        }
-
         // Start bot
         await Client.LoginAsync(TokenType.Bot, token);
         await Client.StartAsync();
 
         // Hooking up more commands
-        Client.Ready += Client_Ready;
+        Client.Ready += ReadSavedData;
 
         // Setup the timer for updating leaderboards every hour
         System.Timers.Timer HourTimer = new System.Timers.Timer(60000); // Call function every minute
@@ -227,9 +219,15 @@ public class Program
         return Task.CompletedTask;
     }
 
-    public async Task Client_Ready()
+    public async Task ReadSavedData()
     {
-        // Gets channel id later than everything else cause it doesnt work otherwise ¯\_(ツ)_/¯
+        // Read saved data
+        LeaderboardMessageId = (ulong?)JsonInterface.ReadJson(MessageFilePath, "ID");
+        // If LeaderboardMessageId returns null, set it to base value (0)
+        if (LeaderboardMessageId == null)
+        {
+            LeaderboardMessageId = 0;
+        }
         ulong? ChannelId = (ulong?)JsonInterface.ReadJson(ChannelFilePath, "ID");
         if (ChannelId != null)
         {
@@ -251,8 +249,6 @@ public class Program
         // Write the new messageid to Message.json
         JsonInterface.WriteToJson(LeaderboardMessageId.ToString(), MessageFilePath);
     }
-
-    #region Commands
 
     public async Task CreateLeaderboard()
     {
@@ -405,7 +401,6 @@ public class Program
 
         // Build all text fields
         EmbedTextBuilder TextBuilder = new();
-
         Embed.AddField("NoSLA", TextBuilder.BuildText(NoSLA, 0));
         Embed.AddField("Amc", TextBuilder.BuildText(Amc, 1));
         Embed.AddField("Speedrun Mod", TextBuilder.BuildText(Srm, 2));
@@ -436,8 +431,6 @@ public class Program
             });
         }
     }
-
-    #endregion
 
     private void CheckHour(object source, ElapsedEventArgs e)
     {
