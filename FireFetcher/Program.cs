@@ -3,9 +3,12 @@ using Discord.WebSocket;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Timers;
+using Microsoft.Extensions.DependencyInjection;
 
 // Thingy to call other classes (in other .cs files)
 using FireFetcher;
+using Discord.Interactions;
+using InteractionFramework;
 
 public class Program
 {
@@ -19,16 +22,15 @@ public class Program
         GatewayIntents = GatewayIntents.None
     };
 
+    private static IServiceProvider Services;
     private DiscordSocketClient Client;
 
     IMessageChannel Channel;
     ulong? LeaderboardMessageId;
-    List<Username> Users = new();
 
     int LastHour = DateTime.Now.Hour;
 
     // Paths to each .json file
-    const string UsersFilePath = "Data/Users.json";
     const string MessageFilePath = "Data/Message.json";
     const string ChannelFilePath = "Data/Channel.json";
 
@@ -126,7 +128,7 @@ public class Program
 
     public class ScoreData
     {
-        public string playerRank { get; set; }
+        public int playerRank { get; set; }
     }
 
     #endregion
@@ -170,22 +172,29 @@ public class Program
 
     public async Task MainAsync()
     {
-        Client = new DiscordSocketClient(Config);
+        Services = new ServiceCollection()
+            .AddSingleton<DiscordSocketClient>()
+            .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
+            .AddSingleton<InteractionHandler>()
+            .AddSingleton(this)
+            .AddSingleton(new UserHandler())
+            .BuildServiceProvider();
+
+        Services.GetRequiredService<UserHandler>().Setup(this);
+
+        Client = Services.GetRequiredService<DiscordSocketClient>();
 
         // Setup logging
         Client.Log += Log;
+
+        // Here we can initialize the service that will register and execute our commands
+        await Services.GetRequiredService<InteractionHandler>().InitializeAsync();
 
         // Read bot-token
         // DO NOT MAKE TOKEN PUBLIC
         var token = File.ReadAllText("Token.txt");
 
         // Read saved data
-        Users = (List<Username>)JsonInterface.ReadJson(UsersFilePath, "Users");
-        // If Users is returned as a null list, re-create it to avoid program crashing
-        if (Users == null)
-        {
-            Users = new();
-        }
         LeaderboardMessageId = (ulong?)JsonInterface.ReadJson(MessageFilePath, "ID");
         // If LeaderboardMessageId returns null, set it to base value (0)
         if (LeaderboardMessageId == null)
@@ -198,8 +207,8 @@ public class Program
         await Client.StartAsync();
 
         // Hooking up more commands
-        Client.Ready += Client_Ready;
-        Client.SlashCommandExecuted += SlashCommandHandler;
+        //Client.Ready += Client_Ready;
+        //Client.SlashCommandExecuted += SlashCommandHandler;
 
         // Setup the timer for updating leaderboards every hour
         System.Timers.Timer HourTimer = new System.Timers.Timer(60000); // Call function every minute
@@ -220,69 +229,6 @@ public class Program
 
     public async Task Client_Ready()
     {
-        List<ApplicationCommandProperties> Commands = new();
-
-        var PingCommand = new SlashCommandBuilder()
-            .WithName("ping")
-            .WithDescription("Get bot latency");
-        Commands.Add(PingCommand.Build());
-
-        var HelpCommand = new SlashCommandBuilder()
-            .WithName("help")
-            .WithDescription("Show commands");
-        Commands.Add(HelpCommand.Build());
-
-        // Command for setting which server channel to send leaderboard in
-        var SetChannelCommand = new SlashCommandBuilder()
-            .WithName("set-channel")
-            .WithDescription("Sets which channel to send leaderboard in")
-            .AddOption("channel", ApplicationCommandOptionType.Channel, "Channel", isRequired: true);
-        Commands.Add(SetChannelCommand.Build());
-        
-        // Command for adding user to leaderboard
-        var AddUserCommand = new SlashCommandBuilder()
-            .WithName("link-accounts")
-            .WithDescription("Links speedrun.com and steam accounts for the leaderboards")
-            .AddOption("src-username", ApplicationCommandOptionType.String, "Speedrun.com username", isRequired: true)
-            .AddOption("steam", ApplicationCommandOptionType.String, "Steam username", isRequired: true);
-        Commands.Add(AddUserCommand.Build());
-
-        // Command for removing user from leaderboard
-        var RemoveUserCommand = new SlashCommandBuilder()
-            .WithName("remove-self")
-            .WithDescription("Removes self from the leaderboard");
-        Commands.Add(RemoveUserCommand.Build());
-
-        var SetNickname = new SlashCommandBuilder()
-            .WithName("set-nickname")
-            .WithDescription("Set nickname for leaderboards")
-            .AddOption("nickname", ApplicationCommandOptionType.String, "Nickname", isRequired: true);
-        Commands.Add(SetNickname.Build());
-
-        var ListUsersCommand = new SlashCommandBuilder()
-            .WithName("list-users")
-            .WithDescription("Lists each added user");
-        Commands.Add(ListUsersCommand.Build());
-
-        // Command for updating leaderboard
-        var UpdateLeaderboardCommand = new SlashCommandBuilder()
-            .WithName("update-leaderboard")
-            .WithDescription("Forces an update of the leaderboard");
-        Commands.Add(UpdateLeaderboardCommand.Build());
-
-        // First make sure all commands exist for the bot
-        await Client.CreateGlobalApplicationCommandAsync(PingCommand.Build());
-        await Client.CreateGlobalApplicationCommandAsync(HelpCommand.Build());
-        await Client.CreateGlobalApplicationCommandAsync(SetChannelCommand.Build());
-        await Client.CreateGlobalApplicationCommandAsync(AddUserCommand.Build());
-        await Client.CreateGlobalApplicationCommandAsync(RemoveUserCommand.Build());
-        await Client.CreateGlobalApplicationCommandAsync(SetNickname.Build());
-        await Client.CreateGlobalApplicationCommandAsync(ListUsersCommand.Build());
-        await Client.CreateGlobalApplicationCommandAsync(UpdateLeaderboardCommand.Build());
-
-        // Then make sure no old commands are allowed to exist
-        await Client.BulkOverwriteGlobalApplicationCommandsAsync(Commands.ToArray());
-        
         // Gets channel id later than everything else cause it doesnt work otherwise ¯\_(ツ)_/¯
         ulong? ChannelId = (ulong?)JsonInterface.ReadJson(ChannelFilePath, "ID");
         if (ChannelId != null)
@@ -295,66 +241,11 @@ public class Program
     {
         Logger Logger = new();
         Logger.CommandLog(Command.Data.Name, Command.User.ToString());
-
-        switch (Command.Data.Name)
-        {
-            case "ping":
-                await HandlePingCommand(Command);
-                break;
-            case "help":
-                await HandleHelpCommand(Command);
-                break;
-            case "set-channel":
-                await HandleSetChannelCommand(Command);
-                break;
-            case "link-accounts":
-                await HandleLinkAccountsCommand(Command);
-                break;
-            case "remove-self":
-                await HandleRemoveSelfCommand(Command);
-                break;
-            case "set-nickname":
-                await HandleSetNicknameCommand(Command);
-                break;
-            case "list-users":
-                await HandleListUsersCommand(Command);
-                break;
-            case "update-leaderboard":
-                await HandleUpdateLeaderboardCommand(Command);
-                break;
-        }
     }
 
-    #region Commands
-
-    private async Task HandlePingCommand(SocketSlashCommand Command)
+    public async Task SetChannel(ITextChannel channel)
     {
-        var Embed = new EmbedBuilder();
-
-        Embed.AddField("Yes I'm alive, now bugger off", "Latency: How should I know???");
-
-        await Command.RespondAsync(embed: Embed.Build());
-    }
-
-    private async Task HandleHelpCommand(SocketSlashCommand Command)
-    {
-        var Embed = new EmbedBuilder();
-
-        Embed.AddField("/ping", "a");
-        Embed.AddField("/help", "a");
-        Embed.AddField("/set-channel", "a");
-        Embed.AddField("/link-accounts", "a");
-        Embed.AddField("/remove-self", "a");
-        Embed.AddField("/set-nickname", "a");
-        Embed.AddField("/list-users", "a");
-        Embed.AddField("/update-leaderboard", "a");
-
-        await Command.RespondAsync(embed: Embed.Build());
-    }
-
-    private async Task HandleSetChannelCommand(SocketSlashCommand Command)
-    {
-        Channel = Command.Data.Options.First().Value as IMessageChannel;
+        Channel = channel;
 
         // Write the new ChannelId to Channel.json
         JsonInterface JsonInterface = new();
@@ -365,163 +256,14 @@ public class Program
 
         // Write the new messageid to Message.json
         JsonInterface.WriteToJson(LeaderboardMessageId.ToString(), MessageFilePath);
-
-        await Command.RespondAsync($"Leaderboard will be sent in {Command.Data.Options.First().Value} from now on", ephemeral: true);
     }
 
-    private async Task HandleLinkAccountsCommand(SocketSlashCommand Command)
+    #region Commands
+
+    public async Task CreateLeaderboard()
     {
-        ulong UserID = Command.User.Id;
-        string Username = Command.User.Username;
-        bool AlreadyInUsers = false;
-        int UserIndex = 0;
+        List<Username> Users = Services.GetRequiredService<UserHandler>().Users;
 
-        // Check if User is already added to Users list
-        for (int i = 0; i < Users.Count; i++)
-        {
-            if (Users[i].DiscordID == UserID)
-            {
-                AlreadyInUsers = true;
-                UserIndex = i;
-                break;
-            }
-        }
-
-        string SrcUsername = Command.Data.Options.First().Value.ToString();
-        string SteamUsername = Command.Data.Options.ElementAt(1).Value.ToString();
-
-        if (AlreadyInUsers)
-        {
-            Users[UserIndex].SpeedrunCom = SrcUsername;
-            Users[UserIndex].Steam = SteamUsername;
-        }
-        else
-        {
-            Users.Add(new Username() { DiscordID = UserID, DiscordName = Username, SpeedrunCom = SrcUsername, Steam = SteamUsername });
-        }
-
-        // Write to Users file
-        JsonInterface JsonInterface = new();
-        JsonInterface.WriteToJson(Users, UsersFilePath);
-
-        await Command.RespondAsync($"Updated linked accounts for {Command.User}", ephemeral: true);
-
-        // Update leaderboards when anything regarding users has been changed
-        await CreateLeaderboard();
-    }
-
-    private async Task HandleRemoveSelfCommand(SocketSlashCommand Command)
-    {
-        ulong UserID = Command.User.Id;
-        int UserIndex = -1;
-
-        // Get index of user
-        for (int i = 0; i < Users.Count; i++)
-        {
-            if (Users[i].DiscordID == UserID)
-            {
-                UserIndex = i;
-                break;
-            }
-        }
-
-        // If user hasnt linked any accounts
-        if (UserIndex == -1)
-        {
-            await Command.RespondAsync($"User has no accounts linked", ephemeral: true);
-        }
-        else
-        {
-            Users.RemoveAt(UserIndex);
-
-            // Write to Users file
-            JsonInterface JsonInterface = new();
-            JsonInterface.WriteToJson(Users, UsersFilePath);
-
-            await Command.RespondAsync($"Unlinked accounts for {Command.User}", ephemeral: true);
-
-            // Update leaderboards when anything regarding users has been changed
-            await CreateLeaderboard();
-        }
-    }
-
-    private async Task HandleSetNicknameCommand(SocketSlashCommand Command)
-    {
-        ulong UserID = Command.User.Id;
-        int UserIndex = -1;
-
-        // Get index of user
-        for (int i = 0; i < Users.Count; i++)
-        {
-            if (Users[i].DiscordID == UserID)
-            {
-                UserIndex = i;
-                break;
-            }
-        }
-
-        // If user hasnt linked any accounts
-        if (UserIndex == -1)
-        {
-            await Command.RespondAsync($"User has no accounts linked, cannot set Nickname", ephemeral: true);
-        }
-        else
-        {
-            Users[UserIndex].Nickname = Command.Data.Options.First().Value.ToString();
-
-            // Write to Users file
-            JsonInterface JsonInterface = new();
-            JsonInterface.WriteToJson(Users, UsersFilePath);
-
-            await Command.RespondAsync($"Changed nickname for {Command.User}", ephemeral: true);
-
-            // Update leaderboards when anything regarding users has been changed
-            await CreateLeaderboard();
-        }
-    }
-
-    private async Task HandleListUsersCommand(SocketSlashCommand Command)
-    {
-        string Text = "";
-        for (int i = 0; i < Users.Count; i++)
-        {
-            // If not first line, make sure everything gets a newline
-            if (i > 0)
-            {
-                Text += '\n';
-            }
-
-            Text += Users[i].DiscordName;
-        }
-
-        if (Users.Count == 0)
-        {
-            Text = "No users are added";
-        }
-
-        var Embed = new EmbedBuilder();
-        Embed.AddField("Users on leaderbaords", Text);
-
-        await Command.RespondAsync(embed: Embed.Build());
-    }
-
-    private async Task HandleUpdateLeaderboardCommand(SocketSlashCommand Command)
-    {
-        // If Channel isnt set then we cant send leaderboard and send error
-        if (Channel == null)
-        {
-            await Command.RespondAsync("Error: No channel set", ephemeral: true);
-        }
-        else
-        {
-            await Command.RespondAsync("Updating leaderboard", ephemeral: true);
-
-            await CreateLeaderboard();
-        }
-    }
-
-    private async Task CreateLeaderboard()
-    {
         // If Channel isnt set then we cant send leaderboard and return early
         if (Channel == null)
         {
@@ -622,7 +364,7 @@ public class Program
         {
             try
             {
-                Cm.Add(new CleanedResponse() { Runner = Users[i].Steam, RunnerNickname = Users[i].Nickname, Place = int.Parse(RawBoardsData[i].times.SP.chambers.bestRank.scoreData.playerRank), Map = MapParser.ParseMap(RawBoardsData[i].times.SP.chambers.bestRank.map) });
+                Cm.Add(new CleanedResponse() { Runner = Users[i].Steam, RunnerNickname = Users[i].Nickname, Place = RawBoardsData[i].times.SP.chambers.bestRank.scoreData.playerRank, Map = MapParser.ParseMap(RawBoardsData[i].times.SP.chambers.bestRank.map) });
             }
             catch
             {
