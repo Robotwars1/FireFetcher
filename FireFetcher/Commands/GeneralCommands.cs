@@ -22,14 +22,14 @@ public class GeneralCommands : InteractionModuleBase<SocketInteractionContext>
     public async Task Help()
     {
         var Embed = new EmbedBuilder();
-        Embed.AddField("/ping", "a");
-        Embed.AddField("/help", "a");
-        Embed.AddField("/link-accounts", "a");
-        Embed.AddField("/remove-self", "a");
-        Embed.AddField("/set-nickname", "a");
-        Embed.AddField("/list-users", "a");
-        Embed.AddField("Admin Commands\n/set-channel", "a");
-        Embed.AddField("/update-leaderboard", "a");
+        Embed.AddField("/ping", "Gets bot latency");
+        Embed.AddField("/help", "Shows this list");
+        Embed.AddField("/link-accounts", "Links accounts for the leaderboards");
+        Embed.AddField("/set-nickname", "Set nickname for leaderboards");
+        Embed.AddField("/remove-self", "Removes self from the leaderboard");
+        Embed.AddField("/list-users", "Lists each added user");
+        Embed.AddField("Admin Commands\n/set-channel", "Sets which channel to send leaderboard in");
+        Embed.AddField("/update-leaderboard", "Forces an update of the leaderboard");
 
         await RespondAsync(embed: Embed.Build());
     }

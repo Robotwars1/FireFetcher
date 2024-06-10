@@ -11,7 +11,7 @@ public class UserCommands : InteractionModuleBase<SocketInteractionContext>
     public InteractionService Commands { get; set; }
     public UserHandler UserHandler { get; set; }
 
-    [SlashCommand("link-accounts", "Links speedrun.com and steam accounts for the leaderboards")]
+    [SlashCommand("link-accounts", "Links accounts for the leaderboards")]
     public async Task LinkAccount(string SrcUsername, string BoardProfileID, string SteamUsername)
     {
         ulong UserID = Context.User.Id;
