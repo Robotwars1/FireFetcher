@@ -208,8 +208,7 @@ public class Program
         await Client.StartAsync();
 
         // Hooking up more commands
-        //Client.Ready += Client_Ready;
-        //Client.SlashCommandExecuted += SlashCommandHandler;
+        Client.Ready += Client_Ready;
 
         // Setup the timer for updating leaderboards every hour
         System.Timers.Timer HourTimer = new System.Timers.Timer(60000); // Call function every minute
