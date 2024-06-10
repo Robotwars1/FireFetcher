@@ -241,13 +241,13 @@ public class Program
 
         // Write the new ChannelId to Channel.json
         JsonInterface JsonInterface = new();
-        JsonInterface.WriteToJson(Channel.Id.ToString(), ChannelFilePath);
+        JsonInterface.WriteToJson(Channel.Id, ChannelFilePath);
 
         // Also reset MessageId to avoid dumb crashed / force the bot to resend leaderboard
         LeaderboardMessageId = 0;
 
         // Write the new messageid to Message.json
-        JsonInterface.WriteToJson(LeaderboardMessageId.ToString(), MessageFilePath);
+        JsonInterface.WriteToJson(LeaderboardMessageId, MessageFilePath);
     }
 
     public async Task CreateLeaderboard()
