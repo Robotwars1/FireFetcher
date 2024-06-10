@@ -40,10 +40,10 @@ namespace FireFetcher
             OutputFile.Close();
         }
 
-        public void CommandLog(string CommandName, string User)
+        public void CommandLog(string User)
         {
             // Write command logging to console
-            Console.WriteLine($"[{DateTime.Now}] {User} used the command {CommandName}");
+            Console.WriteLine($"[{DateTime.Now}] {User} used a command");
 
             CheckLogFolderExists();
 
@@ -51,7 +51,7 @@ namespace FireFetcher
 
             // Write to log
             using StreamWriter OutputFile = File.AppendText(FilePath);
-            OutputFile.WriteLine($"[{DateTime.Now}] {User} used the command {CommandName}");
+            OutputFile.WriteLine($"[{DateTime.Now}] {User} used a command");
             OutputFile.Close();
         }
     }

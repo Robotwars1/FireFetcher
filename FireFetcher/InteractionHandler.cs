@@ -65,6 +65,10 @@ public class InteractionHandler
             // Execute the incoming command.
             var result = await Handler.ExecuteCommandAsync(context, Services);
 
+            // Log the command used and who used it
+            Logger Logger = new();
+            Logger.CommandLog(context.User.Username);
+
             // Due to async nature of InteractionFramework, the result here may always be success.
             // That's why we also need to handle the InteractionExecuted event.
             if (!result.IsSuccess)

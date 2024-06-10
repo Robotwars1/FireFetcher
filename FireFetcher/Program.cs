@@ -237,12 +237,6 @@ public class Program
         }
     }
 
-    private async Task SlashCommandHandler(SocketSlashCommand Command)
-    {
-        Logger Logger = new();
-        Logger.CommandLog(Command.Data.Name, Command.User.ToString());
-    }
-
     public async Task SetChannel(ITextChannel channel)
     {
         Channel = channel;
