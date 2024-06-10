@@ -421,7 +421,7 @@ public class Program
         Embed.AddField("SP Least Portals", TextBuilder.BuildText(SpLp, 5));
         Embed.AddField("\u200B", $"Last updated {new TimestampTag(DateTimeOffset.UtcNow, TimestampTagStyles.Relative)}")
             // Add the footer to the last field
-            .WithFooter(footer => footer.Text = $"To get added to the leaderboards, do /add-user");
+            .WithFooter(footer => footer.Text = $"To get added to the leaderboards, do /link-accounts");
 
         // If leaderboard doesnt exist, send it
         if (LeaderboardMessageId == 0)
