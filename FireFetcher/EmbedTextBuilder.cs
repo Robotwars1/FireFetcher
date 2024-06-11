@@ -55,7 +55,7 @@ namespace FireFetcher
                 }
                 else if (CategoryIndex == 4)
                 {
-                    Sb.Append($" - {ConvertPlace(List[Position + Offset].Place)} on {List[Position + Offset].Map}");
+                    Sb.Append($" - {List[Position + Offset].Points} Points");
                 }
                 else
                 {

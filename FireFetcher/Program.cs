@@ -102,33 +102,17 @@ public class Program
 
     public class BoardsResponse
     {
-        public BoardsTimes times { get; set; }
+        public BoardsPoints points { get; set; }
     }
 
-    public class BoardsTimes
+    public class BoardsPoints
     {
         public SP SP { get; set; }
     }
 
     public class SP
     {
-        public Chambers chambers { get; set; }
-    }
-
-    public class Chambers
-    {
-        public BestRank bestRank { get; set; }
-    }
-
-    public class BestRank
-    {
-        public ScoreData scoreData { get; set; }
-        public object map { get; set; }
-    }
-
-    public class ScoreData
-    {
-        public int playerRank { get; set; }
+        public int score { get; set; }
     }
 
     #endregion
@@ -167,7 +151,7 @@ public class Program
         public string Partner { get; set; }
         public int Place { get; set; }
         public string Time { get; set; }
-        public string Map { get; set; }
+        public int Points { get; set; }
         public int PortalCount { get; set; }
     }
 
@@ -354,7 +338,7 @@ public class Program
         {
             try
             {
-                Cm.Add(new CleanedResponse() { Runner = Users[i].Steam, RunnerNickname = Users[i].Nickname, Place = RawBoardsData[i].times.SP.chambers.bestRank.scoreData.playerRank, Map = MapParser.ParseMap(RawBoardsData[i].times.SP.chambers.bestRank.map) });
+                Cm.Add(new CleanedResponse() { Runner = Users[i].Steam, RunnerNickname = Users[i].Nickname, Points = RawBoardsData[i].points.SP.score, Place = i + 1 });
             }
             catch
             {
@@ -380,7 +364,7 @@ public class Program
         Amc = Amc.OrderBy(o => o.Place).ToList();
         Srm = Srm.OrderBy(o => o.Place).ToList();
         Mel = Mel.OrderBy(o => o.Place).ToList();
-        Cm = Cm.OrderBy(o => o.Place).ToList();
+        Cm = Cm.OrderByDescending(o => o.Points).ToList();
         SpLp = SpLp.OrderBy(o => o.PortalCount).ToList();
 
         // Clean all lists
@@ -405,7 +389,7 @@ public class Program
         Embed.AddField("Amc", TextBuilder.BuildText(Amc, 1));
         Embed.AddField("Speedrun Mod", TextBuilder.BuildText(Srm, 2));
         Embed.AddField("Portal Stories: Mel", TextBuilder.BuildText(Mel, 3));
-        Embed.AddField("SP CM Best Place", TextBuilder.BuildText(Cm, 4));
+        Embed.AddField("SP CM Points", TextBuilder.BuildText(Cm, 4));
         Embed.AddField("SP Least Portals", TextBuilder.BuildText(SpLp, 5));
         Embed.AddField("\u200B", $"Last updated {new TimestampTag(DateTimeOffset.UtcNow, TimestampTagStyles.Relative)}")
             // Add the footer to the last field
