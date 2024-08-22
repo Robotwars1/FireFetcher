@@ -1,15 +1,12 @@
-# FireFetcher
-
 # Categories
-### speedrun.com
-- Portal 2 NoSLA
-- Portal 2 Amc
-- Portal 2 Speedrun Mod
-- Portal Stories: Mel
-### board.portal2.sr
-- Portal 2 Challenge Mode
-### lp.nekz.me
-- Portal 2 Least Portals
+| Game                  | Category              | Mode         |
+| --------------------- | :-------------------: | :----------: |
+| Portal 2              | NoSLA                 | Singleplayer |
+| Portal 2              | Amc                   | Coop         |
+| Portal 2              | Challenge Mode Points | Singleplayer |
+| Portal 2              | Least Portals         | Singleplayer |
+| Portal 2 Speedrun Mod | Singleplayer          | Singleplayer |
+| Portal Stories: Mel   | Story Mode Inbounds   | Singleplayer |
 
 # How it works
 ### Leaderboards
