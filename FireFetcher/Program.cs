@@ -158,6 +158,7 @@ public class Program
     public async Task MainAsync()
     {
         Services = new ServiceCollection()
+            .AddSingleton(Config)
             .AddSingleton<DiscordSocketClient>()
             .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
             .AddSingleton<InteractionHandler>()
