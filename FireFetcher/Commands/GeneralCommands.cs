@@ -6,9 +6,6 @@ namespace FireFetcher.Commands;
 // Interaction modules must be public and inherit from an IInteractionModuleBase
 public class GeneralCommands : InteractionModuleBase<SocketInteractionContext>
 {
-    // Dependencies can be accessed through Property injection, public properties with public setters will be set by the service provider
-    public InteractionService Commands { get; set; }
-
     [SlashCommand("ping", "Get bot latency")]
     public async Task Ping()
     {

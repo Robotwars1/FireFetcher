@@ -48,7 +48,7 @@ namespace FireFetcher
                     Sb.Append($" & {List[Position + Offset].Partner}");
                 }
                 
-                // If LP, add PortalCount, If CM, add BestPlace, otherwise add time
+                // If LP, add PortalCount, If CM, add Points, otherwise add time
                 if (CategoryIndex == 5)
                 {
                     Sb.Append($" - {List[Position + Offset].PortalCount} Portals");

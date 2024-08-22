@@ -13,7 +13,7 @@ namespace FireFetcher
             }
         }
 
-        public void GeneralLog(string Text)
+        public static void GeneralLog(string Text)
         {
             // Write general logging info to console
             Console.WriteLine($"[{DateTime.Now}] {Text}");
@@ -28,7 +28,7 @@ namespace FireFetcher
             OutputFile.Close();
         }
 
-        public void JsonLog(string Data, string File)
+        public static void JsonLog(string Data, string File)
         {
             CheckLogFolderExists();
 
@@ -40,7 +40,7 @@ namespace FireFetcher
             OutputFile.Close();
         }
 
-        public void CommandLog(string User)
+        public static void CommandLog(string User)
         {
             // Write command logging to console
             Console.WriteLine($"[{DateTime.Now}] {User} used a command");

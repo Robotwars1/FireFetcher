@@ -66,7 +66,6 @@ public class InteractionHandler
             var result = await Handler.ExecuteCommandAsync(context, Services);
 
             // Log the command used and who used it
-            Logger Logger = new();
             Logger.CommandLog(context.User.Username);
 
             // Due to async nature of InteractionFramework, the result here may always be success.

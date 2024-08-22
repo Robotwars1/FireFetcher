@@ -3,8 +3,6 @@ namespace FireFetcher
 {
     internal class ApiRequester
     {
-        private string ReturnData = "";
-
         public async Task<string> RequestData(int Site, string? User)
         {
             var Client = new HttpClient();
@@ -40,14 +38,13 @@ namespace FireFetcher
             // If success
             if (Response.IsSuccessStatusCode)
             {
-                ReturnData = await Response.Content.ReadAsStringAsync();
+                return await Response.Content.ReadAsStringAsync();
             }
             else
             {
                 Console.WriteLine($"Failed to get data from site index: {Site}");
+                return "";
             }
-
-            return ReturnData;
         }
     }
 }

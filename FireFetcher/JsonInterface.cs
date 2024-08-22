@@ -5,8 +5,6 @@ namespace FireFetcher
 {
     internal class JsonInterface
     {
-        private readonly Logger Logger = new();
-
         private static readonly JsonSerializerOptions WriteOptions = new()
         {
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull

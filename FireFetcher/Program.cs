@@ -1,18 +1,16 @@
-﻿using Discord;
+﻿using FireFetcher;
+using Discord;
 using Discord.WebSocket;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Timers;
 using Microsoft.Extensions.DependencyInjection;
-
-// Thingy to call other classes (in other .cs files)
-using FireFetcher;
 using Discord.Interactions;
 using InteractionFramework;
 
 public class Program
 {
-    public static Task Main(string[] args) => new Program().MainAsync();
+    public static Task Main() => new Program().MainAsync();
 
     private readonly JsonInterface JsonInterface = new();
     private readonly ApiRequester ApiRequester = new();
@@ -143,7 +141,6 @@ public class Program
         public string Nickname { get; set; } = string.Empty;
     }
 
-    // Classes for cleaned data
     public class CleanedResponse
     {
         public string Runner { get; set; }
@@ -188,7 +185,7 @@ public class Program
         Client.Ready += ReadSavedData;
 
         // Setup the timer for updating leaderboards every hour
-        System.Timers.Timer HourTimer = new System.Timers.Timer(60000); // Call function every minute
+        System.Timers.Timer HourTimer = new(60000);
         HourTimer.Elapsed += new ElapsedEventHandler(CheckHour);
         HourTimer.Start();
 
@@ -198,7 +195,6 @@ public class Program
 
     private Task Log(LogMessage msg)
     {
-        Logger Logger = new();
         Logger.GeneralLog(msg.Message);
 
         return Task.CompletedTask;
@@ -206,13 +202,9 @@ public class Program
 
     public async Task ReadSavedData()
     {
-        // Read saved data
         LeaderboardMessageId = (ulong?)JsonInterface.ReadJson(MessageFilePath, "ID");
-        // If LeaderboardMessageId returns null, set it to base value (0)
-        if (LeaderboardMessageId == null)
-        {
-            LeaderboardMessageId = 0;
-        }
+        LeaderboardMessageId ??= 0; // If LeaderboardMessageId returns null, set it to base value (0)
+
         ulong? ChannelId = (ulong?)JsonInterface.ReadJson(ChannelFilePath, "ID");
         if (ChannelId != null)
         {

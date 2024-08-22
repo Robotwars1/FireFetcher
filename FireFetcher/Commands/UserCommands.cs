@@ -8,7 +8,6 @@ namespace FireFetcher.Commands;
 public class UserCommands : InteractionModuleBase<SocketInteractionContext>
 {
     // Dependencies can be accessed through Property injection, public properties with public setters will be set by the service provider
-    public InteractionService Commands { get; set; }
     public UserHandler UserHandler { get; set; }
 
     [SlashCommand("link-accounts", "Links accounts for the leaderboards")]

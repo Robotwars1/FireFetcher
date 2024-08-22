@@ -9,7 +9,6 @@ namespace FireFetcher.Commands;
 public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
 {
     // Dependencies can be accessed through Property injection, public properties with public setters will be set by the service provider
-    public InteractionService Commands { get; set; }
     public Program FireFetcher { get; set; }
 
     [SlashCommand("set-channel", "Sets which channel to send leaderboard in")]
