@@ -4,7 +4,7 @@ using Discord.Interactions;
 namespace FireFetcher.Commands;
 
 // Interaction modules must be public and inherit from an IInteractionModuleBase
-[EnabledInDm(false)]
+[CommandContextType(InteractionContextType.Guild)]
 [DefaultMemberPermissions(GuildPermission.Administrator)]
 public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
 {

@@ -4,7 +4,7 @@ using Discord.Interactions;
 namespace FireFetcher.Commands;
 
 // Interaction modules must be public and inherit from an IInteractionModuleBase
-[EnabledInDm(false)]
+[CommandContextType(InteractionContextType.Guild)]
 public class UserCommands : InteractionModuleBase<SocketInteractionContext>
 {
     // Dependencies can be accessed through Property injection, public properties with public setters will be set by the service provider
