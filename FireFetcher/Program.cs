@@ -215,10 +215,15 @@ public class Program
         LeaderboardMessageId = (ulong?)JsonInterface.ReadJson(MessageFilePath, "ID");
         LeaderboardMessageId ??= 0; // If LeaderboardMessageId returns null, set it to base value (0)
 
-        ulong? ChannelId = (ulong?)JsonInterface.ReadJson(ChannelFilePath, "ID");
-        if (ChannelId != null)
+        ulong? ChannelID = (ulong?)JsonInterface.ReadJson(ChannelFilePath, "ID");
+        if (ChannelID != null)
         {
-            Channel = Client.GetChannel((ulong)ChannelId) as IMessageChannel;
+            Channel = Client.GetChannel((ulong)ChannelID) as IMessageChannel;
+
+            if (Channel == null)
+            {
+                Logger.GeneralLog($"Failed to get Channel from ID: {ChannelID}");
+            }
         }
     }
 
@@ -244,6 +249,7 @@ public class Program
         // If Channel isnt set then we cant send leaderboard and return early
         if (Channel == null)
         {
+            Logger.GeneralLog("No channel set, can't update leaderboard");
             return;
         }
 
@@ -345,7 +351,7 @@ public class Program
             }
             catch
             {
-                Console.WriteLine($"Failed to parse cm data for {Users[i].DiscordName} with ID: {Users[i].DiscordID}");
+                Logger.GeneralLog($"Failed to parse cm data for {Users[i].DiscordName} with ID: {Users[i].DiscordID}");
             }
         }
 
@@ -407,7 +413,7 @@ public class Program
 
             // Write the new messageid to Message.json
             JsonInterface JsonInterface = new();
-            JsonInterface.WriteToJson(LeaderboardMessageId.ToString(), MessageFilePath);
+            JsonInterface.WriteToJson(LeaderboardMessageId, MessageFilePath);
         }
         // Else, edit it
         else
