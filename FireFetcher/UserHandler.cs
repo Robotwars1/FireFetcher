@@ -39,12 +39,12 @@ namespace FireFetcher
             if (AlreadyInUsers)
             {
                 Users[UserIndex].SpeedrunCom = SrcUsername;
-                Users[UserIndex].BoardProfileID = BoardProfileID;
+                Users[UserIndex].SteamID = BoardProfileID;
                 Users[UserIndex].Steam = SteamUsername;
             }
             else
             {
-                Users.Add(new Username() { DiscordID = UserID, DiscordName = Username, SpeedrunCom = SrcUsername, BoardProfileID = BoardProfileID, Steam = SteamUsername });
+                Users.Add(new Username() { DiscordID = UserID, DiscordName = Username, SpeedrunCom = SrcUsername, SteamID = BoardProfileID, Steam = SteamUsername });
             }
 
             // Write changes to Users file

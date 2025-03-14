@@ -115,18 +115,29 @@ public class Program
 
     #endregion
 
-    #region lp.nekz.me
+    #region lp.portal2.sr
 
     public class LpResponse
     {
-        public List<LpData> data { get; set; }
+        public LpData data { get; set; }
     }
 
     public class LpData
     {
-        public string name { get; set; }
-        public int score { get; set; }
-        public int rank { get; set; }
+        public List<LpPlacements> rankings_singleplayer { get; set; }
+    }
+
+    public class LpPlacements
+    {
+        public int placement { get; set; }
+        public LpUser user { get; set; }
+        public int total_score { get; set; }
+    }
+
+    public class LpUser
+    {
+        public string steam_id { get; set; }
+        public string user_name { get; set; }
     }
 
     #endregion
@@ -136,7 +147,7 @@ public class Program
         public ulong DiscordID { get; set; }
         public string DiscordName { get; set; } = string.Empty;
         public string SpeedrunCom { get; set; } = string.Empty;
-        public string BoardProfileID { get; set; } = string.Empty;
+        public string SteamID { get; set; } = string.Empty;
         public string Steam { get; set; } = string.Empty;
         public string Nickname { get; set; } = string.Empty;
     }
@@ -245,7 +256,7 @@ public class Program
         for (int i = 0; i < Users.Count; i++)
         {
             RawSrcData.Add(JsonSerializer.Deserialize<SrcResponse>(ApiRequester.RequestData(0, Users[i].SpeedrunCom).Result, _readOptions));
-            RawBoardsData.Add(JsonSerializer.Deserialize<BoardsResponse>(ApiRequester.RequestData(1, Users[i].BoardProfileID).Result, _readOptions));
+            RawBoardsData.Add(JsonSerializer.Deserialize<BoardsResponse>(ApiRequester.RequestData(1, Users[i].SteamID).Result, _readOptions));
         }
 
         // Then request LP data
@@ -340,14 +351,14 @@ public class Program
         }
 
         // Clean and parse LP scores
-        for (int i = 0; i < RawLpData.data.Count; i++)
+        for (int i = 0; i < RawLpData.data.rankings_singleplayer.Count; i++)
         {
-            // Compare each added User with each user in lp.nekz.me to only save the Users added to this bot
+            // Go through all players on the lp boards and see if they are added to show on bot leaderboard
             for (int j = 0; j < Users.Count; j++)
             {
-                if (string.Equals(RawLpData.data[i].name, Users[j].Steam, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(RawLpData.data.rankings_singleplayer[i].user.steam_id, Users[j].SteamID, StringComparison.OrdinalIgnoreCase))
                 {
-                    SpLp.Add(new CleanedResponse() { Runner = Users[j].Steam, RunnerNickname = Users[j].Nickname, PortalCount = RawLpData.data[i].score, Place = RawLpData.data[i].rank }); 
+                    SpLp.Add(new CleanedResponse() { Runner = Users[j].Steam, RunnerNickname = Users[j].Nickname, PortalCount = RawLpData.data.rankings_singleplayer[i].total_score, Place = RawLpData.data.rankings_singleplayer[i].placement }); 
                 }
             }
         }

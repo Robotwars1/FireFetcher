@@ -29,7 +29,7 @@ namespace FireFetcher
                     Url = UriBuilder.ToString();
                     break;
                 case 2:
-                    Url = "https://lp.nekz.me/api/v1/sp";
+                    Url = "https://lp.pektezol.dev/api/v1/rankings/lphub";
                     break;
             }
 
