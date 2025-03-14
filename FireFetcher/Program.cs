@@ -218,7 +218,7 @@ public class Program
         ulong? ChannelID = (ulong?)JsonInterface.ReadJson(ChannelFilePath, "ID");
         if (ChannelID != null)
         {
-            Channel = Client.GetChannel((ulong)ChannelID) as IMessageChannel;
+            Channel = await Client.GetChannelAsync((ulong)ChannelID) as IMessageChannel;
 
             if (Channel == null)
             {
