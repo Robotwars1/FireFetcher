@@ -24,6 +24,7 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
     {
         await RespondAsync("Updating leaderboard", ephemeral: true);
 
+        // Respond first since CreateLeaberboard() takes 2-3x the allowed time (6-9s when max allowed is 3s)
         await FireFetcher.CreateLeaderboard();
     }
 }

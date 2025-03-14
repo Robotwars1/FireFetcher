@@ -148,7 +148,6 @@ public class Program
         public string DiscordName { get; set; } = string.Empty;
         public string SpeedrunCom { get; set; } = string.Empty;
         public string SteamID { get; set; } = string.Empty;
-        public string Steam { get; set; } = string.Empty;
         public string Nickname { get; set; } = string.Empty;
     }
 
@@ -342,11 +341,11 @@ public class Program
         {
             try
             {
-                Cm.Add(new CleanedResponse() { Runner = Users[i].Steam, RunnerNickname = Users[i].Nickname, Points = RawBoardsData[i].points.SP.score, Place = i + 1 });
+                Cm.Add(new CleanedResponse() { Runner = Users[i].DiscordName, RunnerNickname = Users[i].Nickname, Points = RawBoardsData[i].points.SP.score, Place = i + 1 });
             }
             catch
             {
-                Console.WriteLine($"Failed to parse cm data for {Users[i].Steam}");
+                Console.WriteLine($"Failed to parse cm data for {Users[i].DiscordName} with ID: {Users[i].DiscordID}");
             }
         }
 
@@ -358,7 +357,7 @@ public class Program
             {
                 if (string.Equals(RawLpData.data.rankings_singleplayer[i].user.steam_id, Users[j].SteamID, StringComparison.OrdinalIgnoreCase))
                 {
-                    SpLp.Add(new CleanedResponse() { Runner = Users[j].Steam, RunnerNickname = Users[j].Nickname, PortalCount = RawLpData.data.rankings_singleplayer[i].total_score, Place = RawLpData.data.rankings_singleplayer[i].placement }); 
+                    SpLp.Add(new CleanedResponse() { Runner = Users[j].DiscordName, RunnerNickname = Users[j].Nickname, PortalCount = RawLpData.data.rankings_singleplayer[i].total_score, Place = RawLpData.data.rankings_singleplayer[i].placement }); 
                 }
             }
         }

@@ -20,7 +20,7 @@ namespace FireFetcher
             Users ??= new();
         }
 
-        public async void LinkAccount(ulong UserID, string Username, string SrcUsername, string BoardProfileID, string SteamUsername)
+        public void LinkAccount(ulong UserID, string Username, string SrcUsername, string SteamID)
         {
             bool AlreadyInUsers = false;
             int UserIndex = 0;
@@ -39,23 +39,19 @@ namespace FireFetcher
             if (AlreadyInUsers)
             {
                 Users[UserIndex].SpeedrunCom = SrcUsername;
-                Users[UserIndex].SteamID = BoardProfileID;
-                Users[UserIndex].Steam = SteamUsername;
+                Users[UserIndex].SteamID = SteamID;
             }
             else
             {
-                Users.Add(new Username() { DiscordID = UserID, DiscordName = Username, SpeedrunCom = SrcUsername, SteamID = BoardProfileID, Steam = SteamUsername });
+                Users.Add(new Username() { DiscordID = UserID, DiscordName = Username, SpeedrunCom = SrcUsername, SteamID = SteamID });
             }
 
             // Write changes to Users file
             JsonInterface JsonInterface = new();
             JsonInterface.WriteToJson(Users, UsersFilePath);
-
-            // Update leaderboards when anything regarding users has been changed
-            await FireFetcher.CreateLeaderboard();
         }
 
-        public async Task<bool> SetNickname(ulong UserID, string Nickname)
+        public bool SetNickname(ulong UserID, string Nickname)
         {
             int UserIndex = -1;
 
@@ -77,15 +73,12 @@ namespace FireFetcher
                 // Write to Users file
                 JsonInterface JsonInterface = new();
                 JsonInterface.WriteToJson(Users, UsersFilePath);
-
-                // Update leaderboards when anything regarding users has been changed
-                await FireFetcher.CreateLeaderboard();
             }
 
             return UserIndex >= 0;
         }
 
-        public async Task<bool> UnlinkAccount(ulong UserID)
+        public bool UnlinkAccount(ulong UserID)
         {
             int UserIndex = -1;
 
@@ -107,9 +100,6 @@ namespace FireFetcher
                 // Write to Users file
                 JsonInterface JsonInterface = new();
                 JsonInterface.WriteToJson(Users, UsersFilePath);
-
-                // Update leaderboards when anything regarding users has been changed
-                await FireFetcher.CreateLeaderboard();
             }
 
             return UserIndex >= 0;

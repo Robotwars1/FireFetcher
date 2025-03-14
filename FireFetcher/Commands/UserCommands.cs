@@ -9,16 +9,20 @@ public class UserCommands : InteractionModuleBase<SocketInteractionContext>
 {
     // Dependencies can be accessed through Property injection, public properties with public setters will be set by the service provider
     public UserHandler UserHandler { get; set; }
+    public Program FireFetcher { get; set; }
 
     [SlashCommand("link-accounts", "Links accounts for the leaderboards")]
-    public async Task LinkAccount(string SrcUsername, string SteamID, string SteamUsername)
+    public async Task LinkAccount(string SrcUsername, string SteamID)
     {
         ulong UserID = Context.User.Id;
         string Username = Context.User.Username;
 
-        UserHandler.LinkAccount(UserID, Username, SrcUsername, SteamID, SteamUsername);
+        UserHandler.LinkAccount(UserID, Username, SrcUsername, SteamID);
 
         await RespondAsync($"Updated linked accounts for {Context.User}", ephemeral: true);
+
+        // Respond first since CreateLeaberboard() takes 2-3x the allowed time (6-9s when max allowed is 3s)
+        await FireFetcher.CreateLeaderboard();
     }
 
     [SlashCommand("set-nickname", "Set nickname for leaderboards")]
@@ -26,10 +30,7 @@ public class UserCommands : InteractionModuleBase<SocketInteractionContext>
     {
         ulong UserID = Context.User.Id;
 
-        // Wait for task to return var
-        var task = UserHandler.SetNickname(UserID, Nickname);
-        await task;
-        bool HasLinkedAcc = task.Result;
+        bool HasLinkedAcc = UserHandler.SetNickname(UserID, Nickname);
 
         // If user hasnt linked any accounts
         if (!HasLinkedAcc)
@@ -40,6 +41,9 @@ public class UserCommands : InteractionModuleBase<SocketInteractionContext>
         {
             await RespondAsync($"Changed nickname for {Context.User}", ephemeral: true);
         }
+
+        // Respond first since CreateLeaberboard() takes 2-3x the allowed time (6-9s when max allowed is 3s)
+        await FireFetcher.CreateLeaderboard();
     }
 
     [SlashCommand("remove-self", "Removes self from the leaderboard")]
@@ -47,10 +51,7 @@ public class UserCommands : InteractionModuleBase<SocketInteractionContext>
     {
         ulong UserID = Context.User.Id;
 
-        // Wait for task to return var
-        var task = UserHandler.UnlinkAccount(UserID);
-        await task;
-        bool HasLinkedAcc = task.Result;
+        bool HasLinkedAcc = UserHandler.UnlinkAccount(UserID);
 
         // If user hasnt linked any accounts
         if (!HasLinkedAcc)
@@ -61,6 +62,9 @@ public class UserCommands : InteractionModuleBase<SocketInteractionContext>
         {
             await RespondAsync($"Unlinked accounts for {Context.User}", ephemeral: true);
         }
+
+        // Respond first since CreateLeaberboard() takes 2-3x the allowed time (6-9s when max allowed is 3s)
+        await FireFetcher.CreateLeaderboard();
     }
 
     [SlashCommand("list-users", "Lists each added user")]
@@ -85,7 +89,7 @@ public class UserCommands : InteractionModuleBase<SocketInteractionContext>
             Text = "No users are added";
         }
 
-        var Embed = new EmbedBuilder();
+        EmbedBuilder Embed = new();
         Embed.AddField("Users on leaderbaords", Text);
 
         await RespondAsync(embed: Embed.Build());
